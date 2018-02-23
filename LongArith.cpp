@@ -12,51 +12,66 @@ constexpr size_t DIGIT_STRING_LENGTH = LongArith::DIGIT_STRING_LENGTH;
 constexpr digit_t MINUS_ONE = LongArith::MINUS_ONE;
 
 
-//****************** ARRAY OPERATING UTILS **********************
-
-// Sum and diff
-
-// increment original by addition and change original
-// sum started from original[shift] and addition[0] (addition is shifted to left)
-// \param original is changing vector
-// \param addition is change
-// \param shift is first index of original to change
-static void add_array(std::vector<digit_t> &original, const std::vector<digit_t> &addition, const size_t& shift);
-// decrement bigger by less and store data in bigger
-// \param bigger is changing digits
-// \param less is value which decreased left
-static void substract_array(std::vector<digit_t> &bigger, const std::vector<digit_t> &less);
-// Working with absolute value
-static void inline inc1_array(std::vector<digit_t> &num);
-static void inline dec1_array(std::vector<digit_t> &num);
-// This is always increase absolute value of array
-// \param change must be positive
-static void increment_array(std::vector<digit_t> &arr, compute_t change);
-// This will decrease absolute value of array.
-// \param change must be lower than DIGIT_BASE
-// \return if arr>change return true else false (means change digit)
-static bool decrement_array(std::vector<digit_t> &arr, digit_t change);
-
-// Mult
-
-// Multiplication of big value on small
-// Complexity O(n), memory O(1)
-static void mult_small(std::vector<digit_t>& big_number, const digit_t& multiplicator);
-// Multiplication of two long numbers
-// Complexity is O(m1.size()*m2.size())
-static std::vector<digit_t> mult_big(const std::vector<digit_t>& m1, const std::vector<digit_t>& m2);
-
-// Division
-
-
-
-//****************** OTHER INTERNAL WORK **********************
+#pragma region Internal Static Code
+//****************** SIMPLE INTERNAL UTILS **********************
 
 // how many digits we need to storage it
-static int get_digit_count(digit_t val);
+static size_t get_digit_count(digit_t val)
+{
+    assert(val < DIGIT_BASE);
+    if (val < 10)
+        return 1;
+    if (val < 100)
+        return 2;
+    if (val < 1000)
+        return 3;
+    if (val < 10000)
+        return 4;
+    if (val < 100000UL)
+        return 5;
+    if (val < 1000000UL)
+        return 6;
+    if (val < 10000000UL)
+        return 7;
+    if (val < 100000000UL)
+        return 8;
+    if (val < 1000000000UL)
+        return 9;
+    size_t res = 9;
+    val /= 1000000000UL;
+    while (val)
+    {
+        val /= 10;
+        res++;
+    }
+    return res;
+}
 
-static bool check_string(const std::string& arg);
-
+// Checks that string is correct integer
+static bool check_string(const std::string& s)
+{
+    using namespace std;
+    //constexpr char digits[] = "0123456789";
+    if (s.empty())
+        return false;
+    auto iterator = s.cbegin();
+    // Check symbols
+    if (s[0] == '+' || s[0] == '-')
+    {
+        ++iterator;
+        if (s.length() == 1)
+            return false;
+    }
+    for (; iterator != s.cend(); ++iterator)
+    {
+        //if (!binary_search(begin(digits), end(digits), *iterator))
+        if (*iterator<'0' || *iterator>'9')
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 // Remove all zeros at end except vect[0]
 template<typename T, typename Alloc>
@@ -71,43 +86,27 @@ static void clean_leading_zeros(std::vector<T, Alloc>& vect)
     }
 }
 
+//****************** ARRAY OPERATING UTILS **********************
 
-//***************** IMPLEMENTATIONS ****************************
-
-LongArith::LongArith(long long default_value, size_t default_capacity)
+// Compares absolute values of encoded numbers in vectors
+// -1 if left>right, 1 if left<right, 0 otherwise
+template<typename dt>
+static inline signed short compare_absolute_vectors(const std::vector<dt>& left, const std::vector<dt>& right)
 {
-    storage.reserve(default_capacity);
-    negative = default_value < 0;
-    compute_t rest = static_cast<compute_t>(default_value);
-    storage.push_back(0);
-    increment_array(storage, negative ? -rest : rest);
-}
-
-LongArith::LongArith(const LongArith& original) : storage(original.storage)
-{
-    negative = original.negative;
-}
-
-LongArith::LongArith(LongArith&& temporary) : storage(std::move(temporary.storage))
-{
-    negative = temporary.negative;
+    if (left.size() > right.size())
+        return -1;
+    if (left.size() < right.size())
+        return 1;
+    ssize_t index = left.size() - 1;
+    while (index > 0 && left[index] == right[index])
+        index--;
+    if (left[index] == right[index])
+        return 0;
+    return (left[index] > right[index]) ? -1 : 1;
 }
 
 
-LongArith& LongArith::operator=(const LongArith& other)
-{
-    storage = other.storage;
-    negative = other.negative;
-    return *this;
-}
-
-LongArith& LongArith::operator=(LongArith&& temp)
-{
-    std::swap(temp.storage, storage);
-    negative = temp.negative;
-    return *this;
-}
-
+// Sum and diff
 
 // Implementation of add_array
 // Assume original and addition is different
@@ -153,8 +152,12 @@ inline void unchecked_internal_add_array(std::vector<digit_t>& original, const s
     }
 }
 
-
-void add_array(std::vector<digit_t>& original, const std::vector<digit_t>& addition, const size_t& shift)
+// increment original by addition and change original
+// sum started from original[shift] and addition[0] (addition is shifted to left)
+// \param original is changing vector
+// \param addition is change
+// \param shift is first index of original to change
+static void add_array(std::vector<digit_t> &original, const std::vector<digit_t> &addition, const size_t& shift)
 {
     // to prevent errors
     if (&original == &addition)
@@ -169,7 +172,10 @@ void add_array(std::vector<digit_t>& original, const std::vector<digit_t>& addit
 }
 
 
-void substract_array(std::vector<digit_t>& bigger, const std::vector<digit_t>& less)
+// decrement bigger by less and store data in bigger
+// \param bigger is changing digits
+// \param less is value which decreased left
+static void substract_array(std::vector<digit_t> &bigger, const std::vector<digit_t> &less)
 {
     assert(bigger.size() >= less.size());
     compute_t to_del = 0;
@@ -178,12 +184,12 @@ void substract_array(std::vector<digit_t>& bigger, const std::vector<digit_t>& l
         to_del += less[i];
         if (to_del > bigger[i])
         {
-            bigger[i] = DIGIT_BASE - (to_del - bigger[i]);
+            bigger[i] = static_cast<digit_t>(DIGIT_BASE - (to_del - bigger[i]));
             to_del = 1;
         }
         else
         {
-            bigger[i] = bigger[i] - to_del;
+            bigger[i] = static_cast<digit_t>(bigger[i] - to_del);
             to_del = 0;
         }
     }
@@ -191,21 +197,22 @@ void substract_array(std::vector<digit_t>& bigger, const std::vector<digit_t>& l
     {
         if (to_del > bigger[i])
         {
-            bigger[i] = DIGIT_BASE - (to_del - bigger[i]);
+            bigger[i] = static_cast<digit_t>(DIGIT_BASE - (to_del - bigger[i]));
             to_del = 1;
         }
         else
         {
-            bigger[i] = bigger[i] - to_del;
+            bigger[i] = static_cast<digit_t>(bigger[i] - to_del);
             to_del = 0;
         }
     }
 
     clean_leading_zeros(bigger);
 }
+// Working with absolute value
 
-
-void inc1_array(std::vector<digit_t>& num)
+// Increase num by 1
+static void inline inc1_array(std::vector<digit_t> &num)
 {
     bool cont = true;
     int index = 0;
@@ -224,7 +231,8 @@ void inc1_array(std::vector<digit_t>& num)
     }
 }
 
-void dec1_array(std::vector<digit_t>& num)
+// Decrease num by 1
+static void inline dec1_array(std::vector<digit_t> &num)
 {
     // We cannot decrement zero
     assert(!(num.size() == 1 && num.back() == 0));
@@ -250,7 +258,10 @@ void dec1_array(std::vector<digit_t>& num)
     assert(!cont);
 }
 
-void increment_array(std::vector<digit_t>& arr, compute_t change)
+
+// This is always increase absolute value of array
+// \param change must be positive
+static void increment_array(std::vector<digit_t> &arr, compute_t change)
 {
     assert(change >= 0);
     switch (change)
@@ -274,20 +285,22 @@ void increment_array(std::vector<digit_t>& arr, compute_t change)
         }
     }
 }
-
-bool decrement_array(std::vector<digit_t>& arr, digit_t change)
+// This will decrease absolute value of array.
+// \param change must be lower than DIGIT_BASE
+// \return if arr>change return true else false (means change digit)
+static bool decrement_array(std::vector<digit_t> &arr, digit_t change)
 {
     assert(change >= 0);
     assert(change < DIGIT_BASE);
     compute_t comp_result = static_cast<compute_t>(arr[0]) - change;
     if (comp_result >= 0)
     {
-        arr[0] = comp_result;
+        arr[0] = static_cast<digit_t>(comp_result);
         return true;
     }
     if (arr.size() == 1)
     {
-        arr[0] = -comp_result;
+        arr[0] = static_cast<digit_t>(-comp_result);
         return false;
     }
     else
@@ -295,12 +308,16 @@ bool decrement_array(std::vector<digit_t>& arr, digit_t change)
         assert(DIGIT_BASE + comp_result >= 0);
         arr[0] = 0;
         dec1_array(arr);
-        arr[0] = DIGIT_BASE + comp_result;
+        arr[0] = static_cast<digit_t>(DIGIT_BASE + comp_result);
         return true;
     }
 }
 
-void mult_small(std::vector<digit_t>& big_number, const digit_t& multiplicator)
+//======= Mult
+
+// Multiplication of big value on small
+// Complexity O(n), memory O(1)
+static void mult_small(std::vector<digit_t>& big_number, const digit_t& multiplicator)
 {
     switch (multiplicator)
     {
@@ -326,7 +343,9 @@ void mult_small(std::vector<digit_t>& big_number, const digit_t& multiplicator)
     }
 }
 
-std::vector<digit_t> mult_big(const std::vector<digit_t>& m1, const std::vector<digit_t>& m2)
+// Multiplication of two long numbers
+// Complexity is O(m1.size()*m2.size())
+static std::vector<digit_t> mult_big(const std::vector<digit_t>& m1, const std::vector<digit_t>& m2)
 {
     using namespace std;
     vector<digit_t> result = { 0 };
@@ -343,21 +362,247 @@ std::vector<digit_t> mult_big(const std::vector<digit_t>& m1, const std::vector<
     return result;
 }
 
-// -1 if left>right, 1 if left<right, 0 otherwise
-template<typename dt>
-inline signed short compare_absolute_vectors(const std::vector<dt>& left, const std::vector<dt>& right)
+// Division
+
+// returns fraction in result & put remainder into dividend
+// Size of dividend_and_remainder must be bigger than divider only by one digit
+// Complexity: O(n^2) in mean, O(log(DIGIT_BASE)*n^2) in worst case
+// \param dividend_and_remainder must begin from nonzero digit and have size in [divider.size(), divider.size()+1]
+// \param divider is simple divider, must begin from nonzero character
+digit_t divide_almost_same_len_vectors(std::vector<digit_t>& dividend_and_remainder, const std::vector<digit_t>& divider)
 {
-    if (left.size() > right.size())
-        return -1;
-    if (left.size() < right.size())
-        return 1;
-    ssize_t index = left.size() - 1;
-    while (index > 0 && left[index] == right[index])
-        index--;
-    if (left[index] == right[index])
+    assert(dividend_and_remainder.size() && divider.size());
+    assert(dividend_and_remainder.size() >= divider.size() && dividend_and_remainder.size() <= divider.size() + 1);
+    assert(dividend_and_remainder.back() && divider.back());
+    // Check simple cases
+    // They have complexity of O(n)
+    const auto abs_cmp = compare_absolute_vectors(dividend_and_remainder, divider);
+    if (abs_cmp > 0)
         return 0;
-    return (left[index] > right[index]) ? -1 : 1;
+    if (abs_cmp == 0)
+    {
+        std::fill(dividend_and_remainder.begin(), dividend_and_remainder.end(), digit_t(0));
+        return 1;
+    }
+
+    // if (abs_cmp < 0)
+
+    // Divide first digits to get result
+    compute_t dividend_beg, divider_beg;
+    if (dividend_and_remainder.size() > divider.size())
+    {
+        dividend_beg = static_cast<compute_t>(dividend_and_remainder.back())*DIGIT_BASE + *(dividend_and_remainder.end() - 2);
+    }
+    else
+    {
+        dividend_beg = dividend_and_remainder.back();
+    }
+    divider_beg = divider.back();
+
+    // Try to divide most significant digits
+    compute_t main_div = dividend_beg / divider_beg;
+    std::vector<digit_t> multiplicated(divider);
+    mult_small(multiplicated, main_div);
+    auto cmp = compare_absolute_vectors(dividend_and_remainder, multiplicated);
+    if (cmp <= 0) // if multiplicated less or equal to dividend
+    {
+        substract_array(dividend_and_remainder, multiplicated);
+        return main_div;
+    }
+
+    // Start to search good divider, because 1th digit/
+    compute_t lower_div = dividend_beg / (divider_beg + 1);
+    // check lower_div
+    multiplicated = divider;
+    mult_small(multiplicated, lower_div);
+    assert(compare_absolute_vectors(multiplicated, dividend_and_remainder) > 0);
+    substract_array(dividend_and_remainder, multiplicated);
+    if (compare_absolute_vectors(dividend_and_remainder, divider) > 0)
+    {
+        return lower_div;
+    }
+    else
+    {
+        add_array(dividend_and_remainder, multiplicated, 0);
+    }
+
+    // Binary search of multiplier
+    // O(log2 of DIGIT_BASE multiplications)
+    compute_t upper = main_div; // upper is too big multiplier
+    compute_t lower = lower_div; // lower is too small multiplier
+    while (1)
+    {
+        if (upper - lower <= 5)
+        {
+            compute_t mult;
+            for (mult = lower; mult <= upper; ++mult)
+            {
+                multiplicated = divider;
+                mult_small(multiplicated, mult);
+                const auto cmp = compare_absolute_vectors(dividend_and_remainder, multiplicated);
+                if (cmp == 0)
+                {
+                    std::fill(dividend_and_remainder.begin(), dividend_and_remainder.end(), digit_t(0));
+                    return mult;
+                }
+                if (cmp > 0)
+                {
+                    substract_array(multiplicated, divider);
+                    substract_array(dividend_and_remainder, multiplicated);
+                    mult--;
+                    return mult;
+                }
+            }
+            throw std::runtime_error("Something wrong in division part");
+        }
+        else
+        {
+            compute_t middle = lower + ((upper - lower) >> 1);
+            multiplicated = divider;
+            mult_small(multiplicated, middle);
+            const auto cmp = compare_absolute_vectors(dividend_and_remainder, multiplicated);
+            if (cmp == 0) // if exact match 
+            {
+                std::fill(dividend_and_remainder.begin(), dividend_and_remainder.end(), digit_t(0));
+                return middle;
+            }
+            bool middle_less = cmp < 0;
+            if (middle_less)
+            {
+                lower = middle;
+            }
+            else
+            {
+                upper = middle;
+            }
+        }
+    }
+
+    throw std::runtime_error("Something wrong in division part");
 }
+
+// Divide dividable by divider
+// Complexity O(divider.size()^2)*dividable.size()/divider.size() = O(m*n)
+// \param dividable must be bigger than divider
+// \return pair of fraction and remainder
+std::pair<std::vector<digit_t>, std::vector<digit_t>> divide_vectors(const std::vector<digit_t>& dividable, const std::vector<digit_t>& divider)
+{
+    assert(dividable.size() >= divider.size());
+    std::deque<digit_t> fraction; // because we insert from begin, use deque
+
+    std::vector<digit_t> current_part(dividable.end() - divider.size(), dividable.end());
+    size_t not_checked_len = dividable.size() - divider.size();
+    bool last = !not_checked_len;
+    while (not_checked_len || last)
+    {
+        digit_t r = divide_almost_same_len_vectors(current_part, divider);
+        current_part.resize(divider.size());
+        fraction.push_front(r);
+
+        size_t lead_zero_count = 0;
+        for (auto iter = current_part.crbegin(); iter != current_part.crend() && !*iter;++iter)
+        {
+            lead_zero_count++;
+        }
+
+        if (lead_zero_count) // We move to begin, than
+        {
+            if (not_checked_len)
+            {
+                const size_t next_shift = (std::min)(lead_zero_count, not_checked_len);
+                const size_t remain_count = divider.size() - next_shift;
+                if (std::is_pod<digit_t>::value)
+                {
+                    digit_t* begin_ptr = &current_part[0];
+                    // Move remainder
+                    memmove(begin_ptr + next_shift, begin_ptr, remain_count * sizeof(digit_t));
+                    // Copy new data in tail
+                    memcpy(begin_ptr, &dividable[0] + not_checked_len - next_shift, next_shift * sizeof(digit_t));
+                }
+                else
+                {
+                    // Move remainder
+                    std::copy_backward(current_part.begin(), current_part.begin() + remain_count, current_part.begin() + (next_shift + remain_count));
+                    // Copy new data in tail
+                    std::copy(dividable.begin() + not_checked_len - next_shift, dividable.begin() + not_checked_len, current_part.begin());
+                }
+                not_checked_len -= next_shift;
+            }
+        }
+        else // if all digits continue to be occupied
+        {
+            if (not_checked_len)
+            {
+                const size_t new_size = divider.size() + 1;
+                current_part.resize(new_size);
+
+                if (std::is_pod<digit_t>::value)
+                {
+                    digit_t* begin_ptr = &current_part[0];
+                    // Move remainder
+                    memmove(begin_ptr + 1, begin_ptr, (new_size - 1) * sizeof(digit_t));
+                }
+                else
+                {
+                    // Move remainder
+                    std::copy_backward(current_part.begin(), current_part.begin() + (new_size - 1), current_part.end());
+                }
+                // Copy new data in tail
+                current_part[0] = dividable[not_checked_len - 1];
+                not_checked_len--;
+            }
+        }
+
+        if (!not_checked_len) // If it here, we end
+            last = !last; // !last for handle not_checked_len==0 in first time, false in all other
+    }
+    return std::make_pair(std::vector<digit_t>(fraction.begin(), fraction.end()), std::move(current_part));
+}
+
+
+
+#pragma endregion
+
+
+#pragma region Class Methods
+
+
+//***************** CLASS INTERFACE IMPLEMENTATIONS ****************************
+
+LongArith::LongArith(long long default_value, size_t default_capacity)
+{
+    storage.reserve(default_capacity);
+    negative = default_value < 0;
+    compute_t rest = static_cast<compute_t>(default_value);
+    storage.push_back(0);
+    increment_array(storage, negative ? -rest : rest);
+}
+
+LongArith::LongArith(const LongArith& original) : storage(original.storage)
+{
+    negative = original.negative;
+}
+
+LongArith::LongArith(LongArith&& temporary) : storage(std::move(temporary.storage))
+{
+    negative = temporary.negative;
+}
+
+
+LongArith& LongArith::operator=(const LongArith& other)
+{
+    storage = other.storage;
+    negative = other.negative;
+    return *this;
+}
+
+LongArith& LongArith::operator=(LongArith&& temp)
+{
+    std::swap(temp.storage, storage);
+    negative = temp.negative;
+    return *this;
+}
+
 
 // -1 if left>right, 1 if left<right, 0 otherwise
 signed short LongArith::compare_absolute_values(const LongArith& left, const LongArith& rigth)
@@ -553,201 +798,6 @@ LongArith& LongArith::operator*=(long multiplier)
     return *this;
 }
 
-// Division
-
-// returns fraction in result & put remainder into dividend
-// Size of dividend_and_remainder must be bigger than divider only by one digit
-// Complexity: O(n^2) in mean, O(DIGIT_BASE*n^2) in worst case
-// \param dividend_and_remainder must begin from nonzero digit and have size in [divider.size(), divider.size()+1]
-// \param divider is simple divider, must begin from nonzero character
-digit_t divide_almost_same_len_vectors(std::vector<digit_t>& dividend_and_remainder, const std::vector<digit_t>& divider)
-{
-    assert(dividend_and_remainder.size() && divider.size());
-    assert(dividend_and_remainder.size() >= divider.size() && dividend_and_remainder.size() <= divider.size() + 1);
-    assert(dividend_and_remainder.back() && divider.back());
-    // Check simple cases
-    // They have complexity of O(n)
-    const auto abs_cmp = compare_absolute_vectors(dividend_and_remainder, divider);
-    if (abs_cmp > 0)
-        return 0;
-    if (abs_cmp == 0)
-    {
-        std::fill(dividend_and_remainder.begin(), dividend_and_remainder.end(), digit_t(0));
-        return 1;
-    }
-
-    // if (abs_cmp < 0)
-
-    // Divide first digits to get result
-    compute_t dividend_beg, divider_beg;
-    if (dividend_and_remainder.size() > divider.size())
-    {
-        dividend_beg = static_cast<compute_t>(dividend_and_remainder.back())*DIGIT_BASE + *(dividend_and_remainder.end() - 2);
-    }
-    else
-    {
-        dividend_beg = dividend_and_remainder.back();
-    }
-    divider_beg = divider.back();
-
-    // Try to divide most significant digits
-    compute_t main_div = dividend_beg / divider_beg;
-    std::vector<digit_t> multiplicated(divider);
-    mult_small(multiplicated, main_div);
-    auto cmp = compare_absolute_vectors(dividend_and_remainder, multiplicated);
-    if (cmp <= 0) // if multiplicated less or equal to dividend
-    {
-        substract_array(dividend_and_remainder, multiplicated);
-        return main_div;
-    }
-
-    // Start to search good divider, because 1th digit/
-    compute_t lower_div = dividend_beg / (divider_beg + 1);
-    // check lower_div
-    multiplicated = divider;
-    mult_small(multiplicated, lower_div);
-    assert(compare_absolute_vectors(multiplicated, dividend_and_remainder) > 0);
-    substract_array(dividend_and_remainder, multiplicated);
-    if (compare_absolute_vectors(dividend_and_remainder, divider) > 0)
-    {
-        return lower_div;
-    }
-    else
-    {
-        add_array(dividend_and_remainder, multiplicated, 0);
-    }
-
-    // Binary search of multiplier
-    // O(log2 of DIGIT_BASE multiplications)
-    compute_t upper = main_div; // upper is too big multiplier
-    compute_t lower = lower_div; // lower is too small multiplier
-    while (1)
-    {
-        if (upper - lower <= 5)
-        {
-            compute_t mult;
-            for (mult = lower; mult <= upper; ++mult)
-            {
-                multiplicated = divider;
-                mult_small(multiplicated, mult);
-                const auto cmp = compare_absolute_vectors(dividend_and_remainder, multiplicated);
-                if (cmp == 0)
-                {
-                    std::fill(dividend_and_remainder.begin(), dividend_and_remainder.end(), digit_t(0));
-                    return mult;
-                }
-                if (cmp > 0)
-                {
-                    substract_array(multiplicated, divider);
-                    substract_array(dividend_and_remainder, multiplicated);
-                    mult--;
-                    return mult;
-                }
-            }
-            throw std::runtime_error("Something wrong in division part");
-        }
-        else
-        {
-            compute_t middle = lower + ((upper - lower) >> 1);
-            multiplicated = divider;
-            mult_small(multiplicated, middle);
-            const auto cmp = compare_absolute_vectors(dividend_and_remainder, multiplicated);
-            if (cmp == 0) // if exact match 
-            {
-                std::fill(dividend_and_remainder.begin(), dividend_and_remainder.end(), digit_t(0));
-                return middle;
-            }
-            bool middle_less = cmp < 0;
-            if (middle_less)
-            {
-                lower = middle;
-            }
-            else
-            {
-                upper = middle;
-            }
-        }
-    }
-
-    throw std::runtime_error("Something wrong in division part");
-}
-
-// Divide dividable by divider
-// \param dividable must be bigger than divider
-// \return pair of fraction and remainder
-std::pair<std::vector<digit_t>, std::vector<digit_t>> divide_vectors(const std::vector<digit_t>& dividable, const std::vector<digit_t>& divider)
-{
-    assert(dividable.size() >= divider.size());
-    std::deque<digit_t> fraction; // because we insert from begin, use deque
-
-    std::vector<digit_t> current_part(dividable.end() - divider.size(), dividable.end());
-    size_t not_checked_len = dividable.size() - divider.size();
-    bool last = !not_checked_len;
-    while (not_checked_len || last)
-    {
-        digit_t r = divide_almost_same_len_vectors(current_part, divider);
-        current_part.resize(divider.size());
-        fraction.push_front(r);
-
-        size_t lead_zero_count = 0;
-        for (auto iter = current_part.crbegin(); iter != current_part.crend() && !*iter;++iter)
-        {
-            lead_zero_count++;
-        }
-
-        if (lead_zero_count) // We move to begin, than
-        {
-            if (not_checked_len)
-            {
-                const size_t next_shift = (std::min)(lead_zero_count, not_checked_len);
-                const size_t remain_count = divider.size() - next_shift;
-                if (std::is_pod<digit_t>::value)
-                {
-                    digit_t* begin_ptr = &current_part[0];
-                    // Move remainder
-                    memmove(begin_ptr + next_shift, begin_ptr, remain_count * sizeof(digit_t));
-                    // Copy new data in tail
-                    memcpy(begin_ptr, &dividable[0] + not_checked_len - next_shift, next_shift * sizeof(digit_t));
-                }
-                else
-                {
-                    // Move remainder
-                    std::copy_backward(current_part.begin(), current_part.begin() + remain_count, current_part.begin() + (next_shift + remain_count));
-                    // Copy new data in tail
-                    std::copy(dividable.begin() + not_checked_len - next_shift, dividable.begin() + not_checked_len, current_part.begin());
-                }
-                not_checked_len -= next_shift;
-            }
-        }
-        else // if all digits continue to be occupied
-        {
-            if (not_checked_len)
-            {
-                const size_t new_size = divider.size() + 1;
-                current_part.resize(new_size);
-
-                if (std::is_pod<digit_t>::value)
-                {
-                    digit_t* begin_ptr = &current_part[0];
-                    // Move remainder
-                    memmove(begin_ptr + 1, begin_ptr, (new_size - 1) * sizeof(digit_t));
-                }
-                else
-                {
-                    // Move remainder
-                    std::copy_backward(current_part.begin(), current_part.begin() + (new_size - 1), current_part.end());
-                }
-                // Copy new data in tail
-                current_part[0] = dividable[not_checked_len - 1];
-                not_checked_len--;
-            }
-        }
-
-        if (!not_checked_len) // If it here, we end
-            last = !last; // !last for handle not_checked_len==0 in first time, false in all other
-    }
-    return std::make_pair(std::vector<digit_t>(fraction.begin(), fraction.end()), std::move(current_part));
-}
 
 std::pair<LongArith, LongArith> LongArith::FractionAndRemainder(const LongArith& dividable, const LongArith& divider)
 {
@@ -894,30 +944,7 @@ std::string LongArith::toString() const
 }
 
 
-bool check_string(const std::string& s)
-{
-    using namespace std;
-    //constexpr char digits[] = "0123456789";
-    if (s.empty())
-        return false;
-    auto iterator = s.cbegin();
-    // Check symbols
-    if (s[0] == '+' || s[0] == '-')
-    {
-        ++iterator;
-        if (s.length() == 1)
-            return false;
-    }
-    for (; iterator != s.end(); ++iterator)
-    {
-        //if (!binary_search(begin(digits), end(digits), *iterator))
-        if (*iterator<'0' || *iterator>'9')
-        {
-            return false;
-        }
-    }
-    return true;
-}
+
 
 LongArith LongArith::fromString(std::string s)
 {
@@ -957,33 +984,5 @@ LongArith LongArith::fromString(std::string s)
 }
 
 
-int get_digit_count(digit_t val)
-{
-    assert(val < DIGIT_BASE);
-    if (val < 10)
-        return 1;
-    if (val < 100)
-        return 2;
-    if (val < 1000)
-        return 3;
-    if (val < 10000)
-        return 4;
-    if (val < 100000UL)
-        return 5;
-    if (val < 1000000UL)
-        return 6;
-    if (val < 10000000UL)
-        return 7;
-    if (val < 100000000UL)
-        return 8;
-    if (val < 1000000000UL)
-        return 9;
-    size_t res = 9;
-    val /= 1000000000UL;
-    while (val)
-    {
-        val /= 10;
-        res++;
-    }
-    return res;
-}
+#pragma endregion
+
