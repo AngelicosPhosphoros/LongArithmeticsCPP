@@ -97,7 +97,7 @@ int main()
         std::cout << t << endl;
         --t;
     }
-    std::cout << ++LongArith(10549) << "\n";
+    std::cout << ++t << "\n";
 
 
     LongArith c = a*b;
@@ -137,6 +137,10 @@ int main()
     cout << dividable << " / " << divider<<"\n";
     std::tie(fraction, rem) = LongArith::FractionAndRemainder(dividable, divider);
     cout << "\t= " << fraction << " ; " << rem<<"\n";
+    cout << LongArith::fromString("654897491581065498498719467981567498") / LongArith::fromString("49879871") << " ; " <<
+        LongArith::fromString("654897491581065498498719467981567498") % LongArith::fromString("49879871") <<"\n";
+    LongArith fr = LongArith::fromString("654897491581065498498719467981567498");
+    fr /=  LongArith::fromString("49879871");
     cout << "FINISHED\n";
     system("pause");
     return 0;
