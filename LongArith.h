@@ -21,6 +21,8 @@ public:
 	// this is for intermediate computation
 	// must be able to store DIGIT_BASE**2
 	typedef signed long long compute_t;
+    //****************** INTERNAL TYPES ****************************
+    typedef std::vector<digit_t> container_type;
 
 	// Default capacity of internal vector
 	static const size_t DEFAULT_DIGIT_CAPACITY = 1;
@@ -30,6 +32,7 @@ public:
 	static constexpr digit_t MINUS_ONE = 0xFFFFFFFF; // This is value which indicates, that we delete from zero
 
 private:
+    
 	//****************** INTERNAL DATA FIELDS **********************
 	std::vector<digit_t> storage;
 	bool negative;

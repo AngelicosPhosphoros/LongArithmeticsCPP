@@ -11,6 +11,7 @@ constexpr digit_t DIGIT_BASE = LongArith::DIGIT_BASE;
 constexpr size_t DIGIT_STRING_LENGTH = LongArith::DIGIT_STRING_LENGTH;
 constexpr digit_t MINUS_ONE = LongArith::MINUS_ONE;
 
+using container_type = LongArith::container_type;
 
 #pragma region Internal Static Code
 //****************** SIMPLE INTERNAL UTILS **********************
@@ -74,8 +75,7 @@ static bool check_string(const std::string& s)
 }
 
 // Remove all zeros at end except vect[0]
-template<typename T, typename Alloc>
-static void clean_leading_zeros(std::vector<T, Alloc>& vect)
+static void clean_leading_zeros(container_type& vect)
 {
     if (vect.size() > 1)
     {
@@ -110,7 +110,7 @@ static inline signed short compare_absolute_vectors(const std::vector<dt>& left,
 
 // Implementation of add_array
 // Assume original and addition is different
-inline void unchecked_internal_add_array(std::vector<digit_t>& original, const std::vector<digit_t>& addition, const size_t& shift)
+inline void unchecked_internal_add_array(container_type& original, const container_type& addition, const size_t& shift)
 {
     assert(&original != &addition);
     // when we work with addition, we keep in mind "virtual" digits
@@ -157,12 +157,12 @@ inline void unchecked_internal_add_array(std::vector<digit_t>& original, const s
 // \param original is changing vector
 // \param addition is change
 // \param shift is first index of original to change
-static void add_array(std::vector<digit_t> &original, const std::vector<digit_t> &addition, const size_t& shift)
+static void add_array(container_type &original, const container_type &addition, const size_t& shift)
 {
     // to prevent errors
     if (&original == &addition)
     {
-        std::vector<digit_t> add_copy(addition);
+        container_type add_copy(addition);
         unchecked_internal_add_array(original, add_copy, shift);
     }
     else
@@ -175,7 +175,7 @@ static void add_array(std::vector<digit_t> &original, const std::vector<digit_t>
 // decrement bigger by less and store data in bigger
 // \param bigger is changing digits
 // \param less is value which decreased left
-static void substract_array(std::vector<digit_t> &bigger, const std::vector<digit_t> &less)
+static void substract_array(container_type &bigger, const container_type &less)
 {
     assert(bigger.size() >= less.size());
     compute_t to_del = 0;
@@ -212,7 +212,7 @@ static void substract_array(std::vector<digit_t> &bigger, const std::vector<digi
 // Working with absolute value
 
 // Increase num by 1
-static void inline inc1_array(std::vector<digit_t> &num)
+static void inline inc1_array(container_type &num)
 {
     bool cont = true;
     int index = 0;
@@ -232,7 +232,7 @@ static void inline inc1_array(std::vector<digit_t> &num)
 }
 
 // Decrease num by 1
-static void inline dec1_array(std::vector<digit_t> &num)
+static void inline dec1_array(container_type &num)
 {
     // We cannot decrement zero
     assert(!(num.size() == 1 && num.back() == 0));
@@ -261,7 +261,7 @@ static void inline dec1_array(std::vector<digit_t> &num)
 
 // This is always increase absolute value of array
 // \param change must be positive
-static void increment_array(std::vector<digit_t> &arr, compute_t change)
+static void increment_array(container_type &arr, compute_t change)
 {
     assert(change >= 0);
     switch (change)
@@ -288,7 +288,7 @@ static void increment_array(std::vector<digit_t> &arr, compute_t change)
 // This will decrease absolute value of array.
 // \param change must be lower than DIGIT_BASE
 // \return if arr>change return true else false (means change digit)
-static bool decrement_array(std::vector<digit_t> &arr, digit_t change)
+static bool decrement_array(container_type &arr, digit_t change)
 {
     assert(change >= 0);
     assert(change < DIGIT_BASE);
@@ -317,7 +317,7 @@ static bool decrement_array(std::vector<digit_t> &arr, digit_t change)
 
 // Multiplication of big value on small
 // Complexity O(n), memory O(1)
-static void mult_small(std::vector<digit_t>& big_number, const digit_t& multiplicator)
+static void mult_small(container_type& big_number, const digit_t& multiplicator)
 {
     switch (multiplicator)
     {
@@ -345,14 +345,14 @@ static void mult_small(std::vector<digit_t>& big_number, const digit_t& multipli
 
 // Multiplication of two long numbers
 // Complexity is O(m1.size()*m2.size())
-static std::vector<digit_t> mult_big(const std::vector<digit_t>& m1, const std::vector<digit_t>& m2)
+static container_type mult_big(const container_type& m1, const container_type& m2)
 {
     using namespace std;
-    vector<digit_t> result = { 0 };
+    container_type result = { 0 };
     result.reserve(m1.size() + m2.size());
-    const vector<digit_t>& bigger = (m1.size() > m2.size()) ? m1 : m2;
-    const vector<digit_t>& smaller = (m1.size() > m2.size()) ? m2 : m1;
-    vector<digit_t> trans_product;
+    const container_type& bigger = (m1.size() > m2.size()) ? m1 : m2;
+    const container_type& smaller = (m1.size() > m2.size()) ? m2 : m1;
+    container_type trans_product;
     for (size_t i = 0; i < smaller.size();i++)
     {
         trans_product = bigger;
@@ -369,7 +369,7 @@ static std::vector<digit_t> mult_big(const std::vector<digit_t>& m1, const std::
 // Complexity: O(n^2) in mean, O(log(DIGIT_BASE)*n^2) in worst case
 // \param dividend_and_remainder must begin from nonzero digit and have size in [divider.size(), divider.size()+1]
 // \param divider is simple divider, must begin from nonzero character
-digit_t divide_almost_same_len_vectors(std::vector<digit_t>& dividend_and_remainder, const std::vector<digit_t>& divider)
+digit_t divide_almost_same_len_vectors(container_type& dividend_and_remainder, const container_type& divider)
 {
     assert(dividend_and_remainder.size() && divider.size());
     assert(dividend_and_remainder.size() >= divider.size() && dividend_and_remainder.size() <= divider.size() + 1);
@@ -401,7 +401,7 @@ digit_t divide_almost_same_len_vectors(std::vector<digit_t>& dividend_and_remain
 
     // Try to divide most significant digits
     compute_t main_div = dividend_beg / divider_beg;
-    std::vector<digit_t> multiplicated(divider);
+    container_type multiplicated(divider);
     mult_small(multiplicated, main_div);
     auto cmp = compare_absolute_vectors(dividend_and_remainder, multiplicated);
     if (cmp <= 0) // if multiplicated less or equal to dividend
@@ -485,12 +485,12 @@ digit_t divide_almost_same_len_vectors(std::vector<digit_t>& dividend_and_remain
 // Complexity O(divider.size()^2)*dividable.size()/divider.size() = O(m*n)
 // \param dividable must be bigger than divider
 // \return pair of fraction and remainder
-std::pair<std::vector<digit_t>, std::vector<digit_t>> divide_vectors(const std::vector<digit_t>& dividable, const std::vector<digit_t>& divider)
+std::pair<container_type, container_type> divide_vectors(const container_type& dividable, const container_type& divider)
 {
     assert(dividable.size() >= divider.size());
     std::deque<digit_t> fraction; // because we insert from begin, use deque
 
-    std::vector<digit_t> current_part(dividable.end() - divider.size(), dividable.end());
+    container_type current_part(dividable.end() - divider.size(), dividable.end());
     size_t not_checked_len = dividable.size() - divider.size();
     bool last = !not_checked_len;
     while (not_checked_len || last)
@@ -556,7 +556,7 @@ std::pair<std::vector<digit_t>, std::vector<digit_t>> divide_vectors(const std::
         if (!not_checked_len) // If it here, we end
             last = !last; // !last for handle not_checked_len==0 in first time, false in all other
     }
-    return std::make_pair(std::vector<digit_t>(fraction.begin(), fraction.end()), std::move(current_part));
+    return std::make_pair(container_type(fraction.begin(), fraction.end()), std::move(current_part));
 }
 
 
@@ -648,8 +648,8 @@ LongArith& LongArith::operator+=(const LongArith& change)&
         else
         {
             negative = change.negative;
-            std::vector<digit_t> tmp(storage);
-            storage = std::vector<digit_t>(change.storage);
+            container_type tmp(storage);
+            storage = container_type(change.storage);
             substract_array(storage, tmp);
         }
     }
@@ -998,7 +998,7 @@ LongArith LongArith::fromString(std::string s)
     // Working with digits
     LongArith result;
     result.negative = negative;
-    vector<digit_t>& digits = result.storage;
+    container_type& digits = result.storage;
     digits.clear();
     digits.reserve(s.length() / DIGIT_STRING_LENGTH + 1);
     for (i = 0; i < s.length() / DIGIT_STRING_LENGTH + (s.length() % DIGIT_STRING_LENGTH > 0 ? 1 : 0); ++i)
