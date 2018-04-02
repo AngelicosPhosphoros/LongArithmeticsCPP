@@ -921,20 +921,24 @@ LongArith::LongArith() :storage()
 
 std::string LongArith::toString() const
 {
-    std::stringstream res;
+    std::string res;
+    res.reserve(storage.size()*LongArith::DIGIT_STRING_LENGTH + int(get_negative()));
+
     if (get_negative() && !equalsZero())
-        res << "-";
-    res << storage.back();
-    for (ssize_t i = storage.size() - 2; i >= 0; --i)
+        res += '-';
+    res += std::to_string(storage.back());
+    for (size_t index = storage.size() - 1; index; --index)
     {
+        const size_t i = index - 1;
         int digits = get_digit_count(storage[i]);
         for (int j = 0; j < DIGIT_STRING_LENGTH - digits; ++j)
         {
-            res << '0';
+            res += '0';
         }
-        res << storage[i];
+        res += std::to_string(storage[i]);
     }
-    return res.str();
+
+    return res;
 }
 
 
