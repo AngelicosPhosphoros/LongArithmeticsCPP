@@ -237,7 +237,7 @@ protected:
         ~container_union();
         inline container_union& operator= (const container_union& other);
         inline container_union& operator= (container_union&& tmp) noexcept;
-        inline void swap(container_union& other);
+        void swap(container_union& other)&;
     public:
         inline bool negative()const {
             return is_local ? local_data.negative : heap_data.negative;
@@ -257,7 +257,7 @@ protected:
         inline void clear();
         inline void push_back(const digit_t val);
         inline digit_t back() const;
-        inline void pop_back() noexcept;
+        inline void pop_back();
 
         // Iterators
         inline digit_t* begin() noexcept;
@@ -295,6 +295,7 @@ static_assert(std::is_nothrow_move_assignable<LongArith>::value && std::is_nothr
 template<typename Iter1, typename Iter2>
 inline LongArith::container_union::container_union(Iter1 beg, Iter2 end) :container_union()
 {
-    for (;beg != end;++beg)
-        push_back(*beg);
+    Iter1 bg = beg;
+    for (;bg != end;++bg)
+        push_back(*bg);
 }

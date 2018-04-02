@@ -123,7 +123,7 @@ inline void unchecked_internal_add_array(container_type& original, const contain
     if (addition.size() + shift > (original.capacity() << 1))
         original.reserve(addition.size() + shift + 1);
     compute_t sum = 0;
-    size_t less = std::min(addition.size() + shift, original.size());
+    const size_t less = std::min(addition.size() + shift, original.size());
     size_t index = shift;
     // common part
     while (index < less)
@@ -323,7 +323,7 @@ static bool decrement_array(container_type &arr, digit_t change)
 
 // Multiplication of big value on small
 // Complexity O(n), memory O(1)
-static void mult_small(container_type& big_number, const digit_t& multiplicator)
+static void mult_small(container_type& big_number, const digit_t multiplicator)
 {
     switch (multiplicator)
     {
@@ -798,7 +798,7 @@ std::pair<LongArith, LongArith> LongArith::FractionAndRemainder(const LongArith&
 
     LongArith fraction, remainder;
     std::tie(fraction.storage, remainder.storage) = divide_vectors(dividable.storage, divider.storage);
-    fraction.set_negative( dividable.get_negative() != divider.get_negative());
+    fraction.set_negative(dividable.get_negative() != divider.get_negative());
     remainder.set_negative(dividable.get_negative());
 
     return t_result(std::move(fraction), std::move(remainder));
@@ -914,7 +914,7 @@ std::istream& operator >> (std::istream& is, LongArith& obj)
     return r;
 }
 
-LongArith::LongArith():storage()
+LongArith::LongArith() :storage()
 {
     storage.push_back(0);
 }
@@ -956,7 +956,7 @@ LongArith LongArith::fromString(std::string s)
     }
     // Working with digits
     LongArith result;
-    result.set_negative( negative);
+    result.set_negative(negative);
     container_type& digits = result.storage;
     digits.clear();
     digits.reserve(s.length() / DIGIT_STRING_LENGTH + 1);
@@ -1034,8 +1034,41 @@ LongArith::container_union & LongArith::container_union::operator=(const contain
 {
     if (this != &other)
     {
-        container_union tmp(other);
-        this->swap(tmp);
+        // Simple case
+        if (is_local)
+        {
+            if (other.is_local)
+            {
+                local_data = other.local_data;
+            }
+            else
+            {
+                const size_t sz = other.heap_data.vdata.size();
+                if (sz <= local_dt::container_capacity)
+                {
+                    copy_heap_to_stack(local_data, other.heap_data);
+                }
+                else
+                {
+                    heap_dt tmp(other.heap_data); // There can be exception
+                    new(this)heap_dt(std::move(tmp)); // there no exception
+                }
+            }
+        }
+        else // We are in heap
+        {
+            if (other.is_local)
+            {
+                const size_t sz = other.size();
+                heap_data.vdata.resize(sz);
+                memcpy(heap_data.vdata.data(), other.local_data.data, sizeof(digit_t)*sz);
+            }
+            else
+            {
+                heap_data.vdata = other.heap_data.vdata;
+            }
+        }
+        set_negative(other.negative());
     }
     return *this;
 }
@@ -1050,8 +1083,10 @@ LongArith::container_union & LongArith::container_union::operator=(container_uni
     return *this;
 }
 
-inline void LongArith::container_union::swap(container_union & other)
+void LongArith::container_union::swap(container_union & other)&
 {
+    if (this == &other)
+        return;
     const bool l_stack = is_local, r_stack = other.is_local;
     if (l_stack && r_stack)
     {
@@ -1113,16 +1148,16 @@ void LongArith::container_union::resize(const size_t new_size)
 
 void LongArith::container_union::reserve(const size_t new_capacity)
 {
-    if (is_local)
+    if (new_capacity > local_dt::container_capacity)
     {
-        if (new_capacity > local_dt::container_capacity)
+        if (is_local)
         {
             switch_to_heap(new_capacity);
         }
-    }
-    else
-    {
-        heap_data.vdata.reserve(new_capacity);
+        else
+        {
+            heap_data.vdata.reserve(new_capacity);
+        }
     }
 }
 
@@ -1142,9 +1177,9 @@ void LongArith::container_union::push_back(const digit_t val)
 {
     if (is_local)
     {
-        if (size() == local_dt::container_capacity)
+        if (local_data.size == local_dt::container_capacity)
         {
-            switch_to_heap(size() + 1);
+            switch_to_heap(local_dt::container_capacity << 1);
             heap_data.vdata.push_back(val);
         }
         else
@@ -1160,7 +1195,7 @@ void LongArith::container_union::push_back(const digit_t val)
 
 digit_t LongArith::container_union::back() const
 {
-    assert(size());
+    assert(size() > 0);
     if (is_local)
     {
         return local_data.data[local_data.size - 1];
@@ -1171,9 +1206,9 @@ digit_t LongArith::container_union::back() const
     }
 }
 
-void LongArith::container_union::pop_back() noexcept
+void LongArith::container_union::pop_back()
 {
-    assert(size());
+    assert(size() > 0);
     if (is_local)
     {
         --local_data.size;
@@ -1216,7 +1251,7 @@ void LongArith::container_union::copy_heap_to_stack(local_dt & dest, const heap_
 {
     assert((void*)&source != (void*)&dest);
     const size_t size = source.vdata.size();
-    memmove(dest.data, source.vdata.data(), sizeof(digit_t)*size);
+    memcpy(dest.data, source.vdata.data(), sizeof(digit_t)*size);
     dest.size = size;
     dest.negative = source.negative;
     dest._on_stack = true;
