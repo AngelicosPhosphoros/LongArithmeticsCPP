@@ -86,7 +86,7 @@ public:
     // \brief Builds long number from decimal string
     // \detailed Builds long number from string, which can begin from '-'
     //           or '+' and can contain only decimal symbols
-    static LongArith fromString(std::string s);
+    static LongArith fromString(const std::string& s);
 
     // \brief Returns sign of number
     // \return Returns -1, if negative; 0, if 0; 1 if positive
@@ -137,7 +137,7 @@ public:
     friend LongArith operator-(const LongArith& original) {
         LongArith result(original);
         result.set_negative(!original.get_negative());
-        return std::move(result);
+        return result;
     }
     friend LongArith operator-(LongArith&& original) {
         original.set_negative(!original.get_negative());

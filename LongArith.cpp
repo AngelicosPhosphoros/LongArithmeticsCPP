@@ -942,22 +942,26 @@ std::string LongArith::toString() const
 }
 
 
-LongArith LongArith::fromString(std::string s)
+LongArith LongArith::fromString(const std::string& arg)
 {
     using namespace std;
     // Trim beginning
-    ssize_t i = 0;
-    while (i < s.length() && (s[i] == ' ' || s[i] == '\t'))
+    size_t i = 0;
+    while (i < arg.length() && (arg[i] == ' ' || arg[i] == '\t'))
         i++;
-    s.erase(0, i);
-    if (!check_string(s))
+    if (i == arg.size() || !check_string(arg))
         throw invalid_argument("Invalid string");
+
     bool negative = false;
-    if (s[0] == '-' || s[0] == '+')
+    if (arg[i] == '-' || arg[i] == '+')
     {
-        negative = s[0] == '-';
-        s.erase(0, 1);;
+        negative = arg[i] == '-';
+        ++i;
     }
+
+    std::string copied = (i ? std::string(arg.begin() + i, arg.end()) : ""); // Copy only if need to erase beginning
+    const std::string& s = (i ? copied : arg);
+
     // Working with digits
     LongArith result;
     result.set_negative(negative);
@@ -976,7 +980,7 @@ LongArith LongArith::fromString(std::string s)
         }
         digits.push_back(tmp);
     }
-    return move(result);
+    return result;
 }
 
 
