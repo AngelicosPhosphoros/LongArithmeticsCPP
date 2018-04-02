@@ -3,7 +3,7 @@
 #include "LongArith.h"
 #include <iostream>
 #include <sstream>
-
+#include <list>
 
 #ifdef _WIN32
 #ifndef _MSC_VER
@@ -24,51 +24,53 @@ uint64_t rdtsc() {
 
 #endif
 
-
+//#include <fstream>
+std::ostream& out = std::cout;//std::ofstream("out1.txt");
 
 int main()
 {
     using namespace  std;
-//    LongArith::test();
+    size_t very_begin = rdtsc();
+    //    LongArith::test();
     LongArith a(5);
     LongArith b(0);
     a += LongArith(100);
-    std::cout << a << "\n";
-    std::cout << b << "\n";
+    out << a << "\n";
+    out << b << "\n";
     b = -a;
-    std::cout << b << "\n";
+    out << b << "\n";
     b = -(LongArith::fromString("15465342342342347489719841234234878") + a + b + LongArith(1000));
     b = -b;
     b -= a;
     b -= LongArith(a);
     b = -std::move(b);
     b = b;
-    std::cout << b << "\n";
+    out << b << "\n";
     b += b;
-    std::cout << b << "\n";
-    std::cout << "Hello, World!" << std::endl;
+    out << b << "\n";
+    out << "Hello, World!" << std::endl;
     ++a;
-    cout << ++a << ++a;
-    cout << --a << --a << endl;
+    out << ++a << ++a;
+    out << --a << --a << endl;
     int n;
 
-    cout << (b = LongArith::fromString("+154654654879498415984984189491941987489719841")) << endl;
-    cout << a << endl;
+    out << (b = LongArith::fromString("+154654654879498415984984189491941987489719841")) << endl;
+    out << a << endl;
     //cin >> a;
-    cout << a << endl;
-    cout << a - b << endl;
-    cout << b - a << endl;
-    cout << a + b << endl;
+    out << a << endl;
+    out << a - b << endl;
+    out << b - a << endl;
+    out << a + b << endl;
     a = LongArith::fromString("+154654654879498415984984189491941987489719841");
     b = LongArith::fromString("468789871987198719871919000000000");
     a *= b;
-    cout << "Check zero\n";
+    out << "Check zero\n";
     a = 0;
     b = LongArith::fromString("468789871987198719871919");
-    cout << a*b << "\n";
+    out << a*b << "\n";
 
-    cout << "Time test\n";
-    cout << "Increment test" << endl;
+    out << "Time test\n";
+    out << "Increment test" << endl;
     LongArith check_count = 1000;
     LongArith iter(1);
     size_t time = rdtsc();
@@ -76,33 +78,33 @@ int main()
     {
         iter *= checks;
     }
-    cout << rdtsc() - time << "\n";
-    cout << iter << "\n";
+    out << rdtsc() - time << "\n";
+    out << iter << "\n";
     a = 999999999L;
-    std::cout << "Iterations:\n";
+    out << "Iterations:\n";
     for (size_t i = 0; i < 5;++i)
     {
-        std::cout << a << endl;
+        out << a << endl;
         ++a;
     }
     for (size_t i = 0; i < 10;++i)
     {
-        std::cout << a << endl;
+        out << a << endl;
         --a;
     }
     LongArith t = 5;
 
     for (size_t i = 0; i < 10;++i)
     {
-        std::cout << t << endl;
+        out << t << endl;
         --t;
     }
-    std::cout << ++t << "\n";
+    out << ++t << "\n";
 
 
     LongArith c = a*b;
-//    c = LongArith::fromString(LongArith::gen2(50, 12))
- //       *LongArith::fromString(LongArith::gen2(40, 7));
+    //    c = LongArith::fromString(LongArith::gen2(50, 12))
+    //       *LongArith::fromString(LongArith::gen2(40, 7));
     c = c * 5;
     c *= 5;
     a = 1;
@@ -111,37 +113,69 @@ int main()
     {
         a += a;
     }
-    cout << rdtsc() - time << "\n";
-    cout << a << "\n";
-    cout << "Comparing\n";
+    out << rdtsc() - time << "\n";
+    out << a << "\n";
+    out << "Comparing\n";
     LongArith ten(10);
     for (LongArith i = -ten; i < ten; ++i)
         for (LongArith j = -ten; j < ten; ++j)
-            cout << i << ">" << j << "==" << (i > j) << "\n";
+            out << i << ">" << j << "==" << (i > j) << "\n";
     int pt = 5;
-    cout << pt;
-    
-    cout << LongArith(1234567890LL) << " - \n" <<
+    out << pt;
+
+    out << LongArith(1234567890LL) << " - \n" <<
         LongArith(1111111111LL) << " = \n" <<
         LongArith(1234567890LL) - LongArith(1111111111LL) << "\n";
 
     LongArith dividable = LongArith(1111111111LL);
-    cout << dividable << " * " << dividable << " = ";
+    out << dividable << " * " << dividable << " = ";
     LongArith divider = 1000LL * 1000 * 1000;
     divider = dividable;
     dividable *= dividable;
-    cout << dividable << "\n";
-    cout << "======================\n"<<
+    out << dividable << "\n";
+    out << "======================\n" <<
         "Division begins...\n";
     LongArith fraction, rem;
-    cout << dividable << " / " << divider<<"\n";
+    out << dividable << " / " << divider << "\n";
     std::tie(fraction, rem) = LongArith::FractionAndRemainder(dividable, divider);
-    cout << "\t= " << fraction << " ; " << rem<<"\n";
-    cout << LongArith::fromString("654897491581065498498719467981567498") / LongArith::fromString("49879871") << " ; " <<
-        LongArith::fromString("654897491581065498498719467981567498") % LongArith::fromString("49879871") <<"\n";
+    out << "\t= " << fraction << " ; " << rem << "\n";
+    out << LongArith::fromString("654897491581065498498719467981567498") / LongArith::fromString("49879871") << " ; " <<
+        LongArith::fromString("654897491581065498498719467981567498") % LongArith::fromString("49879871") << "\n";
     LongArith fr = LongArith::fromString("654897491581065498498719467981567498");
-    fr /=  LongArith::fromString("49879871");
-    cout << "FINISHED\n";
+    fr /= LongArith::fromString("49879871");
+    {
+        std::vector<LongArith> vect; vect.reserve(1000);
+        out << "CHECK VECTOR TIME: ";
+        const size_t vect_c = rdtsc();
+        for (size_t i = 0; i < 1000; ++i)
+        {
+            vect.push_back(LongArith::fromString("468787974191"));
+        }
+        out << rdtsc() - vect_c << " ";
+        for (auto& v : vect)
+        {
+            v *= v;
+        }
+        out << rdtsc() - vect_c << "\n";
+    }
+    {
+        std::list<LongArith> vect;
+        out << "CHECK LIST TIME: ";
+        const size_t vect_c = rdtsc();
+        for (size_t i = 0; i < 1000; ++i)
+        {
+            vect.push_back(LongArith::fromString("468787974191"));
+        }
+        out << rdtsc() - vect_c << " ";
+        for (auto& v : vect)
+        {
+            v *= v;
+        }
+        out << rdtsc() - vect_c << "\n";
+    }
+    out << "FINISHED\n";
+    out << sizeof(LongArith) << "\n";
+    out << "Total ticks " << rdtsc() - very_begin;
     system("pause");
     return 0;
 }
