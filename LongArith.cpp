@@ -577,42 +577,6 @@ LongArith::LongArith(compute_t default_value, size_t default_capacity)
     increment_array(storage, get_negative() ? -rest : rest);
 }
 
-LongArith::LongArith(const LongArith& original) : storage(original.storage)
-{
-   // set_negative(original.get_negative());
-}
-
-LongArith::LongArith(LongArith&& temporary) : storage(std::move(temporary.storage))
-{
-    //set_negative(temporary.get_negative());
-}
-
-
-LongArith& LongArith::operator=(const LongArith& other)&
-{
-    if (this != &other)
-    {
-        if (other.storage.size() <= this->storage.capacity())
-        {
-            storage = other.storage;
-          //  set_negative(other.get_negative());
-        }
-        else
-        {
-            LongArith tmp(other);
-            this->swap(tmp);
-        }
-    }
-    return *this;
-}
-
-LongArith& LongArith::operator=(LongArith&& temp)&
-{
-    std::swap(temp.storage, storage);
-  //  set_negative(temp.get_negative());
-    return *this;
-}
-
 
 // -1 if left>right, 1 if left<right, 0 otherwise
 signed short LongArith::compare_absolute_values(const LongArith& left, const LongArith& rigth)
@@ -950,6 +914,11 @@ std::istream& operator >> (std::istream& is, LongArith& obj)
     return r;
 }
 
+LongArith::LongArith():storage()
+{
+    storage.push_back(0);
+}
+
 std::string LongArith::toString() const
 {
     std::stringstream res;
@@ -1245,22 +1214,22 @@ const digit_t* LongArith::container_union::end() const noexcept
 // If source size larger than dest, UB occurs
 void LongArith::container_union::copy_heap_to_stack(local_dt & dest, const heap_dt & source) noexcept
 {
-    memmove(dest.data, source.vdata.data(), sizeof(digit_t)*source.vdata.size());
-    dest.size = source.vdata.size();
+    assert((void*)&source != (void*)&dest);
+    const size_t size = source.vdata.size();
+    memmove(dest.data, source.vdata.data(), sizeof(digit_t)*size);
+    dest.size = size;
     dest.negative = source.negative;
     dest._on_stack = true;
 }
 
 void LongArith::container_union::switch_to_heap(const size_t reserve_amount)
 {
-    digit_t temp[local_dt::container_capacity];
-    const size_t old_size = size();
-    memcpy(temp, local_data.data, sizeof(digit_t)*old_size);
-    const bool old_neg = local_data.negative;
+    local_dt temp(local_data);
     new(this)heap_dt();
-    heap_data.negative = old_neg;
+    heap_data.negative = temp.negative;
     heap_data.vdata.reserve(std::max(reserve_amount, local_dt::container_capacity));
-    heap_data.vdata.insert(heap_data.vdata.end(), temp, temp + old_size);
+    heap_data.vdata.resize(temp.size);
+    memcpy(heap_data.vdata.data(), temp.data, sizeof(digit_t)*temp.size);
 }
 
 #pragma endregion

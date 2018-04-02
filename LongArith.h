@@ -68,19 +68,17 @@ public:
     inline void swap(LongArith& other)& {
         if (&other != this) {
             this->storage.swap(other.storage);
-//#pragma message("Need to remove swapping negatives")
-//            std::swap(this->negative, other.negative);
         }
     }
 
-    LongArith(const LongArith &original);
+    LongArith(const LongArith &original) = default;
 
-    LongArith(LongArith &&temporary);
+    LongArith(LongArith &&temporary) = default;
 
     LongArith(compute_t default_value) : LongArith(default_value, DEFAULT_DIGIT_CAPACITY) { }
 
     // Constructor. Initiate with zero
-    LongArith() : LongArith(0) { }
+    LongArith();
 
     // \brief Converts string in decimal format
     std::string toString() const;
@@ -193,9 +191,9 @@ public:
     bool equalsZero() const;
 
     // other
-    LongArith &operator=(const LongArith &other)&;
+    LongArith &operator=(const LongArith &other)& = default;
 
-    LongArith &operator=(LongArith &&temp)&;
+    LongArith &operator=(LongArith &&temp)& = default;
 
     friend std::ostream &operator<<(std::ostream &os, const LongArith &obj);
 
@@ -213,7 +211,7 @@ protected:
             bool _on_stack : 1;
             bool negative : 1;
             unsigned short size : 3;
-            constexpr static size_t container_capacity = std::min<size_t>(2*2*2,sizeof(std::vector<digit_t>) / sizeof(digit_t));
+            constexpr static size_t container_capacity = std::min<size_t>(2 * 2 * 2, sizeof(std::vector<digit_t>) / sizeof(digit_t));
             digit_t data[container_capacity];
             local_dt()noexcept : size(0) {}
             local_dt(const bool is_local, const bool is_negative, size_t size) noexcept;
@@ -224,9 +222,9 @@ protected:
             std::vector<digit_t> vdata;
             heap_dt() noexcept: is_local(false), vdata() {}
         };
-//#pragma pop
+        //#pragma pop
 
-        // Checks
+                // Checks
         static_assert(std::is_nothrow_move_assignable<std::vector<digit_t>>::value && std::is_nothrow_move_constructible<std::vector<digit_t>>::value, "nothrow guarantee check failed");
         static_assert(std::is_nothrow_move_assignable<local_dt>::value && std::is_nothrow_move_constructible<local_dt>::value, "nothrow guarantee check failed");
         static_assert(std::is_nothrow_move_assignable<heap_dt>::value && std::is_nothrow_move_constructible<heap_dt>::value, "nothrow guarantee check failed");
@@ -292,7 +290,7 @@ namespace std {
     }
 }
 
-//static_assert(std::is_nothrow_move_assignable<LongArith>::value && std::is_nothrow_move_constructible<LongArith>::value, "nothrow guarantee check failed");
+static_assert(std::is_nothrow_move_assignable<LongArith>::value && std::is_nothrow_move_constructible<LongArith>::value, "nothrow guarantee check failed");
 
 template<typename Iter1, typename Iter2>
 inline LongArith::container_union::container_union(Iter1 beg, Iter2 end) :container_union()
