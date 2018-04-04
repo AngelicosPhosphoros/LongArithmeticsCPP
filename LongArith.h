@@ -22,8 +22,6 @@ public:
     // must be able to store DIGIT_BASE**2
     typedef signed long long compute_t;
 
-    // Default capacity of internal vector
-    static const size_t DEFAULT_DIGIT_CAPACITY = 1;
     // base of our numeral system
     static constexpr compute_t DIGIT_BASE = 1000ULL * 1000 * 1000;
     static constexpr size_t DIGIT_STRING_LENGTH = 9; // how long string of one digit
@@ -35,8 +33,6 @@ public:
     static_assert(std::is_signed<compute_t>::value, "compute_t must be signed");
 
 private:
-    // internal constructors
-    LongArith(compute_t default_value, size_t default_capacity);
 
     // getters and setters
     inline bool get_negative()const
@@ -68,14 +64,16 @@ public:
         }
     }
 
+    // Constructor. Initiate with zero
+    LongArith();
+
+    // With initial value
+    LongArith(compute_t default_value);
+
     LongArith(const LongArith &original) = default;
 
     LongArith(LongArith &&temporary) = default;
 
-    LongArith(compute_t default_value) : LongArith(default_value, DEFAULT_DIGIT_CAPACITY) { }
-
-    // Constructor. Initiate with zero
-    LongArith();
 
     // \brief Converts string in decimal format
     std::string toString() const;

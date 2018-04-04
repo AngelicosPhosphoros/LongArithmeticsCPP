@@ -589,24 +589,6 @@ std::pair<container_type, container_type> divide_vectors(const container_type& d
 
 //***************** CLASS INTERFACE IMPLEMENTATIONS ****************************
 
-LongArith::LongArith(compute_t default_value, size_t default_capacity)
-{
-    storage.reserve(default_capacity);
-    set_negative(default_value < 0);
-    // Avoiding integer overflow
-    if (default_value == std::numeric_limits<compute_t>::min())
-    {
-        ++default_value;
-        storage.push_back(1);
-    }
-    else
-    {
-        storage.push_back(0);
-    }
-    increment_array(storage, (default_value < 0) ? -default_value : default_value);
-}
-
-
 // -1 if left>right, 1 if left<right, 0 otherwise
 signed short LongArith::compare_absolute_values(const LongArith& left, const LongArith& rigth)
 {
@@ -943,6 +925,22 @@ std::istream& operator >> (std::istream& is, LongArith& obj)
     return r;
 }
 
+LongArith::LongArith(compute_t default_value) :storage()
+{
+    set_negative(default_value < 0);
+    // Avoiding integer overflow
+    if (default_value == std::numeric_limits<compute_t>::min())
+    {
+        ++default_value;
+        storage.push_back(1);
+    }
+    else
+    {
+        storage.push_back(0);
+    }
+    increment_array(storage, (default_value < 0) ? -default_value : default_value);
+}
+
 LongArith::LongArith() :storage()
 {
     storage.push_back(0);
@@ -988,7 +986,12 @@ LongArith LongArith::fromString(const std::string& arg)
         ++i;
     }
 
-    std::string copied = (i ? std::string(arg.begin() + i, arg.end()) : ""); // Copy only if need to erase beginning
+    std::string copied;
+    if (i)
+    {
+        copied = std::string(arg.begin() + i, arg.end()); // Copy only if need to erase beginning
+    }
+
     const std::string& s = (i ? copied : arg);
 
     // Working with digits
