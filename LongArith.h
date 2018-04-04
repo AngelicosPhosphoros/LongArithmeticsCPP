@@ -27,7 +27,6 @@ public:
     // base of our numeral system
     static constexpr compute_t DIGIT_BASE = 1000ULL * 1000 * 1000;
     static constexpr size_t DIGIT_STRING_LENGTH = 9; // how long string of one digit
-    static constexpr digit_t MINUS_ONE = 0xFFFFFFFF; // This is value which indicates, that we delete from zero
 
     // assertions
     static_assert(sizeof(digit_t) <= sizeof(compute_t), "compute_t must be bigger than digit_t");

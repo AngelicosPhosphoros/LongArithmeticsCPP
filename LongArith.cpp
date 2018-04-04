@@ -7,18 +7,22 @@
 
 struct internal_accessor :public LongArith {
     using container_type = LongArith::container_type;
+    using container_union = LongArith::container_union;
 };
 using compute_t = LongArith::compute_t;
 using digit_t = LongArith::digit_t;
-constexpr digit_t DIGIT_BASE = LongArith::DIGIT_BASE;
+constexpr compute_t DIGIT_BASE = LongArith::DIGIT_BASE;
 constexpr size_t DIGIT_STRING_LENGTH = LongArith::DIGIT_STRING_LENGTH;
-constexpr digit_t MINUS_ONE = LongArith::MINUS_ONE;
 
 
 
 using container_type = internal_accessor::container_type;
 
-static_assert(std::is_nothrow_move_assignable<LongArith>::value && std::is_nothrow_move_constructible<LongArith>::value, "nothrow guarantee check failed");
+// Type asserts
+static_assert(std::is_nothrow_move_assignable<LongArith>::value && std::is_nothrow_move_constructible<LongArith>::value, "Nothrow guarantee check for LongArith failed");
+static_assert(std::numeric_limits<compute_t>::max() >= DIGIT_BASE*DIGIT_BASE && std::numeric_limits<compute_t>::min() <= -DIGIT_BASE*DIGIT_BASE, "Checks for sizes of compute_t failed");
+static_assert(std::numeric_limits<digit_t>::max() >= DIGIT_BASE, "digit_t have not enough range");
+static_assert(sizeof(internal_accessor::container_union::local_dt) <= sizeof(internal_accessor::container_union::heap_dt), "Local value optimization produces large result (this can be supressed)");
 
 // Casts 
 #if 0
