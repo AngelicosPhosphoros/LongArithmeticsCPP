@@ -18,7 +18,32 @@ constexpr digit_t MINUS_ONE = LongArith::MINUS_ONE;
 
 using container_type = internal_accessor::container_type;
 
-constexpr size_t s = sizeof(container_type::local_dt);
+static_assert(std::is_nothrow_move_assignable<LongArith>::value && std::is_nothrow_move_constructible<LongArith>::value, "nothrow guarantee check failed");
+
+// Casts 
+#if 0
+
+compute_t cast_digit_to_compute(const digit_t val)
+{
+    return static_cast<compute_t>(val);
+}
+
+digit_t cast_compute_to_digit(const compute_t val)
+{
+    if (val < 0 || val >= static_cast<compute_t>(DIGIT_BASE))
+        throw std::logic_error("Cast error on digit_t -> compute_t");
+    return static_cast<digit_t>(val);
+}
+
+
+#define TO_COMPUTE_T(val) cast_digit_to_compute(val)
+#define TO_DIGIT_T(val) cast_compute_to_digit(val)
+
+#else
+#define TO_COMPUTE_T(val) static_cast<compute_t>(val)
+#define TO_DIGIT_T(val) static_cast<digit_t>(val)
+#endif
+
 
 #pragma region Internal Static Code
 //****************** SIMPLE INTERNAL UTILS **********************
@@ -116,7 +141,7 @@ static inline signed short compare_absolute_vectors(const container_type& left, 
 
 // Implementation of add_array
 // Assume original and addition is different
-inline void unchecked_internal_add_array(container_type& original, const container_type& addition, const size_t& shift)
+inline void unchecked_internal_add_array(container_type& original, const container_type& addition, const size_t shift)
 {
     assert(&original != &addition);
     // when we work with addition, we keep in mind "virtual" digits
@@ -190,12 +215,12 @@ static void substract_array(container_type &bigger, const container_type &less)
         to_del += less[i];
         if (to_del > bigger[i])
         {
-            bigger[i] = static_cast<digit_t>(DIGIT_BASE - (to_del - bigger[i]));
+            bigger[i] = TO_DIGIT_T(DIGIT_BASE - (to_del - bigger[i]));
             to_del = 1;
         }
         else
         {
-            bigger[i] = static_cast<digit_t>(bigger[i] - to_del);
+            bigger[i] = TO_DIGIT_T(bigger[i] - to_del);
             to_del = 0;
         }
     }
@@ -203,12 +228,12 @@ static void substract_array(container_type &bigger, const container_type &less)
     {
         if (to_del > bigger[i])
         {
-            bigger[i] = static_cast<digit_t>(DIGIT_BASE - (to_del - bigger[i]));
+            bigger[i] = TO_DIGIT_T(DIGIT_BASE - (to_del - bigger[i]));
             to_del = 1;
         }
         else
         {
-            bigger[i] = static_cast<digit_t>(bigger[i] - to_del);
+            bigger[i] = TO_DIGIT_T(bigger[i] - to_del);
             to_del = 0;
         }
     }
@@ -221,7 +246,7 @@ static void substract_array(container_type &bigger, const container_type &less)
 static void inline inc1_array(container_type &num)
 {
     bool cont = true;
-    int index = 0;
+    size_t index = 0;
     while (cont && index < num.size())
     {
         cont = ++num[index] == DIGIT_BASE;
@@ -298,15 +323,15 @@ static bool decrement_array(container_type &arr, digit_t change)
 {
     assert(change >= 0);
     assert(change < DIGIT_BASE);
-    compute_t comp_result = static_cast<compute_t>(arr[0]) - change;
+    compute_t comp_result = TO_COMPUTE_T(arr[0]) - change;
     if (comp_result >= 0)
     {
-        arr[0] = static_cast<digit_t>(comp_result);
+        arr[0] = TO_DIGIT_T(comp_result);
         return true;
     }
     if (arr.size() == 1)
     {
-        arr[0] = static_cast<digit_t>(-comp_result);
+        arr[0] = TO_DIGIT_T(-comp_result);
         return false;
     }
     else
@@ -314,7 +339,7 @@ static bool decrement_array(container_type &arr, digit_t change)
         assert(DIGIT_BASE + comp_result >= 0);
         arr[0] = 0;
         dec1_array(arr);
-        arr[0] = static_cast<digit_t>(DIGIT_BASE + comp_result);
+        arr[0] = TO_DIGIT_T(DIGIT_BASE + comp_result);
         return true;
     }
 }
@@ -323,7 +348,7 @@ static bool decrement_array(container_type &arr, digit_t change)
 
 // Multiplication of big value on small
 // Complexity O(n), memory O(1)
-static void mult_small(container_type& big_number, const digit_t multiplicator)
+static void mult_small(container_type& big_number, const compute_t multiplicator)
 {
     switch (multiplicator)
     {
@@ -334,10 +359,11 @@ static void mult_small(container_type& big_number, const digit_t multiplicator)
     case 1:
         return;
     default:
-        compute_t trans_product = 0, mult = static_cast<compute_t>(multiplicator);
+        assert(multiplicator < TO_COMPUTE_T(DIGIT_BASE)*DIGIT_BASE);
+        compute_t trans_product = 0, mult = TO_COMPUTE_T(multiplicator);
         for (size_t i = 0; i < big_number.size(); i++)
         {
-            trans_product = trans_product + mult * static_cast<compute_t>(big_number[i]);
+            trans_product = trans_product + mult * TO_COMPUTE_T(big_number[i]);
             big_number[i] = trans_product % DIGIT_BASE;
             trans_product = trans_product / DIGIT_BASE;
         }
@@ -397,7 +423,7 @@ digit_t divide_almost_same_len_vectors(container_type& dividend_and_remainder, c
     compute_t dividend_beg, divider_beg;
     if (dividend_and_remainder.size() > divider.size())
     {
-        dividend_beg = static_cast<compute_t>(dividend_and_remainder.back())*DIGIT_BASE + *(dividend_and_remainder.end() - 2);
+        dividend_beg = TO_COMPUTE_T(dividend_and_remainder.back())*DIGIT_BASE + *(dividend_and_remainder.end() - 2);
     }
     else
     {
@@ -413,11 +439,11 @@ digit_t divide_almost_same_len_vectors(container_type& dividend_and_remainder, c
     if (cmp <= 0) // if multiplicated less or equal to dividend
     {
         substract_array(dividend_and_remainder, multiplicated);
-        return main_div;
+        return TO_DIGIT_T(main_div);
     }
 
     // Start to search good divider, because 1th digit/
-    digit_t lower_div = dividend_beg / (divider_beg + 1);
+    compute_t lower_div = dividend_beg / (divider_beg + 1);
     // check lower_div
     multiplicated = divider;
     mult_small(multiplicated, lower_div);
@@ -425,7 +451,7 @@ digit_t divide_almost_same_len_vectors(container_type& dividend_and_remainder, c
     substract_array(dividend_and_remainder, multiplicated);
     if (compare_absolute_vectors(dividend_and_remainder, divider) > 0)
     {
-        return lower_div;
+        return TO_DIGIT_T(lower_div);
     }
     else
     {
@@ -449,14 +475,14 @@ digit_t divide_almost_same_len_vectors(container_type& dividend_and_remainder, c
                 if (cmp == 0)
                 {
                     std::fill(dividend_and_remainder.begin(), dividend_and_remainder.end(), digit_t(0));
-                    return mult;
+                    return TO_DIGIT_T(mult);
                 }
                 if (cmp > 0)
                 {
                     substract_array(multiplicated, divider);
                     substract_array(dividend_and_remainder, multiplicated);
                     mult--;
-                    return mult;
+                    return TO_DIGIT_T(mult);
                 }
             }
             throw std::runtime_error("Something wrong in division part");
@@ -470,7 +496,7 @@ digit_t divide_almost_same_len_vectors(container_type& dividend_and_remainder, c
             if (cmp == 0) // if exact match 
             {
                 std::fill(dividend_and_remainder.begin(), dividend_and_remainder.end(), digit_t(0));
-                return middle;
+                return TO_DIGIT_T(middle);
             }
             bool middle_less = cmp < 0;
             if (middle_less)
@@ -573,8 +599,7 @@ LongArith::LongArith(compute_t default_value, size_t default_capacity)
     {
         storage.push_back(0);
     }
-    compute_t rest = static_cast<compute_t>(default_value);
-    increment_array(storage, get_negative() ? -rest : rest);
+    increment_array(storage, (default_value < 0) ? -default_value : default_value);
 }
 
 
@@ -652,7 +677,7 @@ LongArith& LongArith::operator+=(long change)&
     }
     else
     {
-        if (change >= DIGIT_BASE || change <= -static_cast<compute_t>(DIGIT_BASE))
+        if (change >= DIGIT_BASE || change <= -TO_COMPUTE_T(DIGIT_BASE))
         {
             (*this) += LongArith(change);
         }
@@ -816,7 +841,7 @@ std::pair<LongArith, long> LongArith::FractionAndRemainder(const LongArith & div
     if (std::numeric_limits<long>::min() == divider)
     {
         auto res = FractionAndRemainder(dividable, LongArith(divider));
-        return t_result(std::move(res.first), res.second.to_plain_int());
+        return t_result(std::move(res.first), static_cast<long>(res.second.to_plain_int()));
     }
     //static_assert(false, "Not finished");
     return std::pair<LongArith, long>();
@@ -829,7 +854,7 @@ compute_t LongArith::to_plain_int() const
     compute_t res = storage[0];
     if (storage.size() == 2)
         res += storage[1] * DIGIT_BASE;
-    return res;
+    return get_negative() ? -res : res;
 }
 
 
@@ -930,8 +955,8 @@ std::string LongArith::toString() const
     for (size_t index = storage.size() - 1; index; --index)
     {
         const size_t i = index - 1;
-        int digits = get_digit_count(storage[i]);
-        for (int j = 0; j < DIGIT_STRING_LENGTH - digits; ++j)
+        size_t digits = get_digit_count(storage[i]);
+        for (int j = 0; j < int(DIGIT_STRING_LENGTH) - digits; ++j)
         {
             res += '0';
         }
@@ -992,17 +1017,22 @@ LongArith LongArith::fromString(const std::string& arg)
 
 
 LongArith::container_union::local_dt::local_dt(const bool is_local, const bool is_negative, size_t _size) noexcept :
-_on_stack(is_local), negative(is_negative), size(_size)
+is_local(is_local), negative(is_negative), size(unsigned short(_size))
 {
+    assert(_size <= local_dt::container_capacity);
 }
 
 LongArith::container_union::container_union() : local_data(true, false, 0)
 {
 }
 
-LongArith::container_union::container_union(const container_union & other) : local_data(other.local_data)
+LongArith::container_union::container_union(const container_union & other)
 {
-    if (!other.is_local)
+    if (other.is_local)
+    {
+        new(this) local_dt(other.local_data);
+    }
+    else
     {
         if (other.heap_data.vdata.size() > local_dt::container_capacity)
         {
@@ -1015,9 +1045,13 @@ LongArith::container_union::container_union(const container_union & other) : loc
     }
 }
 
-LongArith::container_union::container_union(container_union && tmp) noexcept :local_data(tmp.local_data)
+LongArith::container_union::container_union(container_union && tmp) noexcept
 {
-    if (!tmp.is_local)
+    if (tmp.is_local)
+    {
+        new(this) local_dt(tmp.local_data);
+    }
+    else
     {
         if (tmp.heap_data.vdata.size() > local_dt::container_capacity)
         {
@@ -1075,8 +1109,8 @@ LongArith::container_union & LongArith::container_union::operator=(const contain
             {
                 heap_data.vdata = other.heap_data.vdata;
             }
+            set_negative(other.negative());
         }
-        set_negative(other.negative());
     }
     return *this;
 }
@@ -1203,7 +1237,11 @@ void LongArith::container_union::push_back(const digit_t val)
 
 digit_t LongArith::container_union::back() const
 {
-    assert(size() > 0);
+    //assert(size() > 0);
+    if (size() == 0)
+    {
+        throw "error";
+    }
     if (is_local)
     {
         return local_data.data[local_data.size - 1];
@@ -1262,7 +1300,7 @@ void LongArith::container_union::copy_heap_to_stack(local_dt & dest, const heap_
     memcpy(dest.data, source.vdata.data(), sizeof(digit_t)*size);
     dest.size = size;
     dest.negative = source.negative;
-    dest._on_stack = true;
+    dest.is_local = true;
 }
 
 void LongArith::container_union::switch_to_heap(const size_t reserve_amount)

@@ -99,8 +99,8 @@ int main()
     using namespace  std;
 
     const char old_label[] = "Old impl\n", new_label[] = "New impl\n";
-   // tout << old_label;
-   // simple_operation_benchmark<LA_Old>();
+    // tout << old_label;
+    // simple_operation_benchmark<LA_Old>();
     tout << new_label;
     simple_operation_benchmark<LongArith>();
 
@@ -135,7 +135,6 @@ int main()
     ++a;
     out << ++a << ++a;
     out << --a << --a << endl;
-    int n;
 
     out << (b = LongArith::fromString("+154654654879498415984984189491941987489719841")) << endl;
     out << a << endl;
@@ -259,7 +258,7 @@ int main()
     out << "FINISHED\n";
     out << sizeof(LongArith) << "\n";
     out << "Total ticks " << rdtsc() - very_begin;
-   // system("pause");
+    // system("pause");
     return 0;
 }
 

@@ -42,12 +42,10 @@ private:
     // getters and setters
     inline bool get_negative()const
     {
-        //return negative;
         return storage.negative();
     }
     inline void set_negative(const bool neg)
     {
-        //return negative = neg;
         storage.set_negative(neg);
     }
 
@@ -206,14 +204,14 @@ protected:
     // This is container that work same way as vector but keep small storages directly in stack
     union container_union {
         // types
-//#pragma pack(push,1)
         struct local_dt {
-            bool _on_stack : 1;
+            bool is_local : 1;
             bool negative : 1;
-            unsigned short size : 3;
-            constexpr static size_t container_capacity = std::min<size_t>(2 * 2 * 2, sizeof(std::vector<digit_t>) / sizeof(digit_t));
+            unsigned short size : 4;
+            // Minimum of max value of 4 bit size and vector memory amount
+            constexpr static size_t container_capacity = std::min<size_t>(0xF, sizeof(std::vector<digit_t>) / sizeof(digit_t));
             digit_t data[container_capacity];
-            local_dt()noexcept : size(0) {}
+            local_dt()noexcept : is_local(true), size(0), negative(false) {}
             local_dt(const bool is_local, const bool is_negative, size_t size) noexcept;
         };
         struct heap_dt {
@@ -222,9 +220,8 @@ protected:
             std::vector<digit_t> vdata;
             heap_dt() noexcept: is_local(false), vdata() {}
         };
-        //#pragma pop
 
-                // Checks
+        // Checks
         static_assert(std::is_nothrow_move_assignable<std::vector<digit_t>>::value && std::is_nothrow_move_constructible<std::vector<digit_t>>::value, "nothrow guarantee check failed");
         static_assert(std::is_nothrow_move_assignable<local_dt>::value && std::is_nothrow_move_constructible<local_dt>::value, "nothrow guarantee check failed");
         static_assert(std::is_nothrow_move_assignable<heap_dt>::value && std::is_nothrow_move_constructible<heap_dt>::value, "nothrow guarantee check failed");
@@ -290,12 +287,11 @@ namespace std {
     }
 }
 
-static_assert(std::is_nothrow_move_assignable<LongArith>::value && std::is_nothrow_move_constructible<LongArith>::value, "nothrow guarantee check failed");
-
 template<typename Iter1, typename Iter2>
 inline LongArith::container_union::container_union(Iter1 beg, Iter2 end) :container_union()
 {
     Iter1 bg = beg;
+    reserve(end - beg);
     for (;bg != end;++bg)
         push_back(*bg);
 }
