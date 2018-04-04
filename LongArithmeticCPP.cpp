@@ -134,11 +134,13 @@ void fast_division_benchmark()
     for (size_t i = 0; i < 10000; ++i)
     {
         result2.emplace_back(
-            t[i].fast_divide_by_10(i+1),
-            t[i].fast_remainder_by_10(i+1)
+            t[i].fast_divide_by_10(i),
+            t[i].fast_remainder_by_10(i)
         );
     }
     const size_t second_end = rdtsc();
+
+    std::ostringstream eout;
 
     bool correct = true;
     for (size_t i = 0; i < result1.size(); ++i)
@@ -146,9 +148,15 @@ void fast_division_benchmark()
         if (result1[i] != result2[i])
         {
             correct = false;
-            break;
+
+            eout << i << ":" <<
+                "\n\t" << t[i] << " / " << dividers[i] <<
+                "\n\t=" << result1[i].first << "\n\t=" << result2[i].first <<
+                "\n\t%" << result1[i].second << "\n\t%" << result2[i].second << endl;
         }
     }
+
+    std::ofstream("division_errors.txt") << eout.str();
 
     tout << "Simple division time: " << first_end - first_begin << endl;
     tout << "Fast division time: " << second_end - second_begin << endl;
@@ -178,7 +186,16 @@ int main()
     out << tout.str();
     ofstream("tmp.txt") << garbage_marker << garbage.str();
 
+
     size_t very_begin = rdtsc();
+
+    LongArith tt = 11;
+    tt *= LongArith::DIGIT_BASE;
+    tt *= LongArith::DIGIT_BASE;
+    tt += 11;
+    out << tt / 11 << endl;
+    out << (tt - 11) / 11 << endl;
+
     //    LongArith::test();
     LongArith a(5);
     LongArith b(0);

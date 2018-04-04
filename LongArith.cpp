@@ -532,21 +532,14 @@ std::pair<container_type, container_type> divide_vectors(const container_type& d
     bool last = !not_checked_len;
     while (not_checked_len || last)
     {
-        if (current_part.back())
-        {
-            digit_t r = divide_almost_same_len_vectors(current_part, divider);
-            fraction.push_front(r);
-        }
-        else
-        {
-            fraction.push_back(0);
-        }
+        digit_t r = divide_almost_same_len_vectors(current_part, divider);
+        fraction.push_front(r);
 
         if (current_part.size() != divider.size())
         {
             const size_t old = current_part.size();
             current_part.resize(divider.size());
-            memset(&current_part[old], 0, (divider.size() - old) * sizeof(digit_t));
+            std::fill(&current_part[old], &current_part[old] + (divider.size() - old), 0);
         }
 
         size_t lead_zero_count = 0;
@@ -555,9 +548,9 @@ std::pair<container_type, container_type> divide_vectors(const container_type& d
             lead_zero_count++;
         }
 
-        if (lead_zero_count) // We move to begin, than
+        if (lead_zero_count) // We can skip zeros
         {
-            if (not_checked_len) // We can skip zeros
+            if (not_checked_len)
             {
                 const size_t next_shift = (std::min)(lead_zero_count, not_checked_len);
                 const size_t remain_count = divider.size() - next_shift;
@@ -569,9 +562,9 @@ std::pair<container_type, container_type> divide_vectors(const container_type& d
                 memcpy(begin_ptr, &dividable[0] + not_checked_len - next_shift, next_shift * sizeof(digit_t));
                 not_checked_len -= next_shift;
 
-                for (size_t i = 0; i < next_shift; ++i)
+                for (size_t i = 1; i < next_shift; ++i) // We add zeros in places of skiped positions
                 {
-                    fraction.push_back(0);
+                    fraction.push_front(0);
                 }
             }
         }
@@ -590,12 +583,19 @@ std::pair<container_type, container_type> divide_vectors(const container_type& d
                 current_part[0] = dividable[not_checked_len - 1];
                 not_checked_len--;
             }
+            else
+            {
+                assert(last); // This can happen only if last
+            }
         }
 
         if (!not_checked_len) // If it here, we end
             last = !last; // !last for handle not_checked_len==0 in first time, false in all other
     }
-    return std::make_pair(container_type(fraction.begin(), fraction.end()), std::move(current_part));
+    container_type fr(fraction.begin(), fraction.end());
+    clean_leading_zeros(fr);
+    clean_leading_zeros(current_part);
+    return std::make_pair(std::move(fr), std::move(current_part));
 }
 
 
@@ -852,19 +852,22 @@ std::pair<LongArith, long> LongArith::fraction_and_remainder(const LongArith & d
     return std::pair<LongArith, long>();
 }
 
-size_t len_10_in_DIGIT_BASE()
+// Utility for constant calculation
+namespace hidden 
 {
-    size_t v = DIGIT_BASE;
-    size_t r = 0;
-    while (v > 1)
+    size_t len_10_in_DIGIT_BASE()
     {
-        r++;
-        v /= 10;
+        size_t v = DIGIT_BASE;
+        size_t r = 0;
+        while (v > 1)
+        {
+            r++;
+            v /= 10;
+        }
+        return r;
     }
-    return r;
 }
-
-const static size_t DecimalDigitLen = len_10_in_DIGIT_BASE();
+const static size_t DecimalDigitLen = hidden::len_10_in_DIGIT_BASE();
 
 LongArith LongArith::fast_divide_by_10(const size_t power) const
 {
@@ -915,7 +918,7 @@ LongArith LongArith::fast_remainder_by_10(const size_t power) const
     for (size_t i = 0; i < remain; ++i)
         remain_div *= 10;
 
-    const size_t copy_size = (digits_skipped >= storage.size()) ? storage.size() : (digits_skipped + (remain > 0) ? 1 : 0);
+    const size_t copy_size = (digits_skipped >= storage.size()) ? storage.size() : (digits_skipped + ((remain > 0) ? 1 : 0));
     LongArith result;
     result.set_negative(get_negative());
     result.storage.resize(copy_size);
@@ -926,6 +929,8 @@ LongArith LongArith::fast_remainder_by_10(const size_t power) const
         const size_t i = result.storage.size() - 1;
         result.storage[i] = result.storage[i] % remain_div;
     }
+
+    clean_leading_zeros(result.storage);
 
     return result;
 }
