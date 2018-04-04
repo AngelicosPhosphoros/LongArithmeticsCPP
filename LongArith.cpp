@@ -921,7 +921,16 @@ std::istream& operator >> (std::istream& is, LongArith& obj)
 {
     std::string s;
     std::istream& r = is >> s;
-    obj = LongArith::fromString(s);
+
+    try 
+    {
+        obj = LongArith::fromString(s);
+    }
+    catch (std::invalid_argument)
+    {
+        obj = 0;
+    }
+
     return r;
 }
 
