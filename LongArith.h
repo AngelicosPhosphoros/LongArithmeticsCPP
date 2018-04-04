@@ -91,11 +91,22 @@ public:
 
     // \brief Divide dividend by divider, returns fraction and remainder
     // \return Pair of fraction (first) and remainder (second)
-    static std::pair<LongArith, LongArith> FractionAndRemainder(const LongArith& dividable, const LongArith& divider);
+    static std::pair<LongArith, LongArith> fraction_and_remainder(const LongArith& dividable, const LongArith& divider);
 
     // \brief Divide dividend by divider, returns fraction and remainder
     // \return Pair of fraction (first) and remainder (second)
-    static std::pair<LongArith, long> FractionAndRemainder(const LongArith& dividable, const long divider);
+    static std::pair<LongArith, long> fraction_and_remainder(const LongArith& dividable, const long divider);
+
+    // \brief Divide value by 10^power
+    // \param power - exponent of 10
+    // \return value/10^power
+    LongArith fast_divide_by_10(const size_t power) const;
+
+    // \brief Divide value by 10^power
+    // \param power - exponent of 10
+    // \return value%10^power
+    LongArith fast_remainder_by_10(const size_t power) const;
+
 
     // \return true, if value can be stored in compute_t
     inline bool plain_convertable()const {
@@ -121,11 +132,11 @@ public:
 
     friend LongArith operator *(const LongArith& a, const LongArith& b);
     friend LongArith operator /(const LongArith& a, const LongArith& b) {
-        return LongArith::FractionAndRemainder(a, b).first;
+        return LongArith::fraction_and_remainder(a, b).first;
     }
 
     friend LongArith operator %(const LongArith& a, const LongArith& b) {
-        return LongArith::FractionAndRemainder(a, b).second;
+        return LongArith::fraction_and_remainder(a, b).second;
     }
 
     // unary minus
@@ -161,13 +172,12 @@ public:
     LongArith & operator*=(long multiplier)&;
 
     LongArith & operator/=(const LongArith& divider)& {
-        return (*this = LongArith::FractionAndRemainder(*this, divider).first);
+        return (*this = LongArith::fraction_and_remainder(*this, divider).first);
     }
 
     LongArith & operator%=(const LongArith& divider)& {
-        return (*this = LongArith::FractionAndRemainder(*this, divider).second);
+        return (*this = LongArith::fraction_and_remainder(*this, divider).second);
     }
-
 
     //Logic
     bool operator<(const LongArith &other) const;
@@ -228,6 +238,8 @@ protected:
         container_union(container_union&& tmp) noexcept;
         template<typename Iter1, typename Iter2>
         container_union(Iter1 beg, Iter2 end);
+        template<>
+        container_union(const digit_t * beg, const digit_t * end);
         ~container_union();
         inline container_union& operator= (const container_union& other);
         inline container_union& operator= (container_union&& tmp) noexcept;
@@ -274,7 +286,6 @@ private:
 
     //****************** INTERNAL DATA FIELDS **********************
     container_type storage;
-    //bool negative;
 };
 
 namespace std {

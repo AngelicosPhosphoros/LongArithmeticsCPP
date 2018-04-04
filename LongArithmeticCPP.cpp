@@ -94,6 +94,70 @@ void vector_op_benchmark()
         garbage << tmp;
 }
 
+void fast_division_benchmark()
+{
+    tout << begin_marker << "FAST DIV" << endl;
+    const size_t begin = rdtsc();
+
+    std::vector<LongArith> t;
+    LongArith M(10000);
+    for (LongArith i = 0; i < M; ++i)
+    {
+        LongArith tmp = rand() % 1000;
+        for (size_t i = 0; i < 100;++i)
+            tmp *= rand() % 1000;
+        t.push_back(tmp);
+    }
+
+    std::vector<LongArith> dividers = { 1 };
+    for (LongArith i = 1; i < M; ++i)
+    {
+        dividers.emplace_back(dividers.back() * 10);
+    }
+
+    tout << "Set generated in " << rdtsc() - begin << endl;
+
+    std::vector<std::pair<LongArith, LongArith>> result1, result2;
+    result1.reserve(M.to_plain_int()); result2.reserve(M.to_plain_int());
+
+
+
+    const size_t first_begin = rdtsc();
+    for (size_t i = 0; i < 10000; ++i)
+    {
+        auto r = LongArith::fraction_and_remainder(t[i], dividers[i]);
+        result1.emplace_back(std::move(r));
+    }
+    const size_t first_end = rdtsc();
+
+    const size_t second_begin = rdtsc();
+    for (size_t i = 0; i < 10000; ++i)
+    {
+        result2.emplace_back(
+            t[i].fast_divide_by_10(i+1),
+            t[i].fast_remainder_by_10(i+1)
+        );
+    }
+    const size_t second_end = rdtsc();
+
+    bool correct = true;
+    for (size_t i = 0; i < result1.size(); ++i)
+    {
+        if (result1[i] != result2[i])
+        {
+            correct = false;
+            break;
+        }
+    }
+
+    tout << "Simple division time: " << first_end - first_begin << endl;
+    tout << "Fast division time: " << second_end - second_begin << endl;
+    tout << "Is correct: " << correct << endl;
+
+    const size_t end = rdtsc();
+    tout << end_marker << end - begin << endl;
+}
+
 int main()
 {
     using namespace  std;
@@ -110,6 +174,7 @@ int main()
     vector_op_benchmark<LongArith>();
 
 
+    fast_division_benchmark();
     out << tout.str();
     ofstream("tmp.txt") << garbage_marker << garbage.str();
 
@@ -219,7 +284,7 @@ int main()
         "Division begins...\n";
     LongArith fraction, rem;
     out << dividable << " / " << divider << "\n";
-    std::tie(fraction, rem) = LongArith::FractionAndRemainder(dividable, divider);
+    std::tie(fraction, rem) = LongArith::fraction_and_remainder(dividable, divider);
     out << "\t= " << fraction << " ; " << rem << "\n";
     out << LongArith::fromString("654897491581065498498719467981567498") / LongArith::fromString("49879871") << " ; " <<
         LongArith::fromString("654897491581065498498719467981567498") % LongArith::fromString("49879871") << "\n";

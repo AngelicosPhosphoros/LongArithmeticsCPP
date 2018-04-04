@@ -403,13 +403,14 @@ static container_type mult_big(const container_type& m1, const container_type& m
 // returns fraction in result & put remainder into dividend
 // Size of dividend_and_remainder must be bigger than divider only by one digit
 // Complexity: O(n^2) in mean, O(log(DIGIT_BASE)*n^2) in worst case
-// \param dividend_and_remainder must begin from nonzero digit and have size in [divider.size(), divider.size()+1]
+// \param dividend_and_remainder must begin from nonzero digit if longer than divider and have size in [divider.size(), divider.size()+1]
 // \param divider is simple divider, must begin from nonzero character
 digit_t divide_almost_same_len_vectors(container_type& dividend_and_remainder, const container_type& divider)
 {
     assert(dividend_and_remainder.size() && divider.size());
     assert(dividend_and_remainder.size() >= divider.size() && dividend_and_remainder.size() <= divider.size() + 1);
-    assert(dividend_and_remainder.back() && divider.back());
+    assert(divider.back());
+    assert(dividend_and_remainder.size() == divider.size() || (dividend_and_remainder.back() && dividend_and_remainder.size() == divider.size() + 1));
     // Check simple cases
     // They have complexity of O(n)
     const auto abs_cmp = compare_absolute_vectors(dividend_and_remainder, divider);
@@ -531,9 +532,22 @@ std::pair<container_type, container_type> divide_vectors(const container_type& d
     bool last = !not_checked_len;
     while (not_checked_len || last)
     {
-        digit_t r = divide_almost_same_len_vectors(current_part, divider);
-        current_part.resize(divider.size());
-        fraction.push_front(r);
+        if (current_part.back())
+        {
+            digit_t r = divide_almost_same_len_vectors(current_part, divider);
+            fraction.push_front(r);
+        }
+        else
+        {
+            fraction.push_back(0);
+        }
+
+        if (current_part.size() != divider.size())
+        {
+            const size_t old = current_part.size();
+            current_part.resize(divider.size());
+            memset(&current_part[old], 0, (divider.size() - old) * sizeof(digit_t));
+        }
 
         size_t lead_zero_count = 0;
         for (size_t i = current_part.size(); i && !current_part[i - 1];--i)
@@ -543,7 +557,7 @@ std::pair<container_type, container_type> divide_vectors(const container_type& d
 
         if (lead_zero_count) // We move to begin, than
         {
-            if (not_checked_len)
+            if (not_checked_len) // We can skip zeros
             {
                 const size_t next_shift = (std::min)(lead_zero_count, not_checked_len);
                 const size_t remain_count = divider.size() - next_shift;
@@ -554,6 +568,11 @@ std::pair<container_type, container_type> divide_vectors(const container_type& d
                 // Copy new data in tail
                 memcpy(begin_ptr, &dividable[0] + not_checked_len - next_shift, next_shift * sizeof(digit_t));
                 not_checked_len -= next_shift;
+
+                for (size_t i = 0; i < next_shift; ++i)
+                {
+                    fraction.push_back(0);
+                }
             }
         }
         else // if all digits continue to be occupied
@@ -780,7 +799,7 @@ LongArith& LongArith::operator*=(long multiplier)&
 }
 
 
-std::pair<LongArith, LongArith> LongArith::FractionAndRemainder(const LongArith& dividable, const LongArith& divider)
+std::pair<LongArith, LongArith> LongArith::fraction_and_remainder(const LongArith& dividable, const LongArith& divider)
 {
     typedef std::pair<LongArith, LongArith> t_result;
     // Argument check
@@ -815,7 +834,7 @@ std::pair<LongArith, LongArith> LongArith::FractionAndRemainder(const LongArith&
     return t_result(std::move(fraction), std::move(remainder));
 }
 
-std::pair<LongArith, long> LongArith::FractionAndRemainder(const LongArith & dividable, const long divider)
+std::pair<LongArith, long> LongArith::fraction_and_remainder(const LongArith & dividable, const long divider)
 {
     // Argument check
     if (!divider)
@@ -826,11 +845,89 @@ std::pair<LongArith, long> LongArith::FractionAndRemainder(const LongArith & div
     typedef std::pair<LongArith, long> t_result;
     if (std::numeric_limits<long>::min() == divider)
     {
-        auto res = FractionAndRemainder(dividable, LongArith(divider));
+        auto res = fraction_and_remainder(dividable, LongArith(divider));
         return t_result(std::move(res.first), static_cast<long>(res.second.to_plain_int()));
     }
     //static_assert(false, "Not finished");
     return std::pair<LongArith, long>();
+}
+
+size_t len_10_in_DIGIT_BASE()
+{
+    size_t v = DIGIT_BASE;
+    size_t r = 0;
+    while (v > 1)
+    {
+        r++;
+        v /= 10;
+    }
+    return r;
+}
+
+const static size_t DecimalDigitLen = len_10_in_DIGIT_BASE();
+
+LongArith LongArith::fast_divide_by_10(const size_t power) const
+{
+    if (!power)
+        return *this;
+
+    const size_t digits_skipped = power / DecimalDigitLen;
+    const size_t remain = power % DecimalDigitLen;
+    digit_t remain_div = 1;
+    for (size_t i = 0; i < remain; ++i)
+        remain_div *= 10;
+
+    if (digits_skipped >= storage.size() || (digits_skipped == storage.size() - 1 && remain_div > storage.back()))
+        return LongArith(0);
+
+    LongArith result;
+    result.set_negative(get_negative());
+    result.storage.resize(storage.size() - digits_skipped);
+    memcpy(&result.storage[0], &storage[digits_skipped], sizeof(digit_t)*(storage.size() - digits_skipped));
+
+    if (remain_div == 1)
+        return result;
+
+    for (size_t i = 0; i + 1 < result.storage.size(); ++i)
+    {
+        compute_t next_digit_summed = TO_COMPUTE_T(result.storage[i + 1]) * DIGIT_BASE + result.storage[i];
+        result.storage[i] = TO_DIGIT_T((next_digit_summed / remain_div) % DIGIT_BASE);
+    }
+    if (result.storage.back() >= remain_div)
+    {
+        result.storage[result.storage.size() - 1] = result.storage.back() / remain_div;
+    }
+    else
+    {
+        result.storage.pop_back();
+    }
+    return result;
+}
+
+LongArith LongArith::fast_remainder_by_10(const size_t power) const
+{
+    if (!power)
+        return LongArith(0);
+
+    const size_t digits_skipped = power / DecimalDigitLen;
+    const size_t remain = power % DecimalDigitLen;
+    digit_t remain_div = 1;
+    for (size_t i = 0; i < remain; ++i)
+        remain_div *= 10;
+
+    const size_t copy_size = (digits_skipped >= storage.size()) ? storage.size() : (digits_skipped + (remain > 0) ? 1 : 0);
+    LongArith result;
+    result.set_negative(get_negative());
+    result.storage.resize(copy_size);
+    memcpy(&result.storage[0], &storage[0], copy_size * sizeof(digit_t));
+
+    if (remain > 0 && storage.size() > digits_skipped)
+    {
+        const size_t i = result.storage.size() - 1;
+        result.storage[i] = result.storage[i] % remain_div;
+    }
+
+    return result;
 }
 
 compute_t LongArith::to_plain_int() const
@@ -922,7 +1019,7 @@ std::istream& operator >> (std::istream& is, LongArith& obj)
     std::string s;
     std::istream& r = is >> s;
 
-    try 
+    try
     {
         obj = LongArith::fromString(s);
     }
@@ -1077,6 +1174,27 @@ LongArith::container_union::container_union(container_union && tmp) noexcept
         {
             container_union::copy_heap_to_stack(local_data, tmp.heap_data);
         }
+    }
+}
+
+template<>
+LongArith::container_union::container_union(const digit_t* beg, const digit_t* end)
+{
+    const size_t requested_size = end - beg;
+    if (!requested_size)
+    {
+        new(this)container_union();
+    }
+    else if (requested_size <= local_dt::container_capacity)
+    {
+        new(this)local_dt(true, false, requested_size);
+        memcpy(local_data.data, beg, requested_size * sizeof(digit_t));
+    }
+    else
+    {
+        new(this)heap_dt();
+        heap_data.vdata.resize(requested_size);
+        memcpy(heap_data.vdata.data(), beg, requested_size * sizeof(digit_t));
     }
 }
 
