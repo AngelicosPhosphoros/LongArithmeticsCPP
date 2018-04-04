@@ -24,12 +24,95 @@ uint64_t rdtsc() {
 
 #endif
 
-//#include <fstream>
-std::ostream& out = std::cout;//std::ofstream("out1.txt");
+#include <fstream>
+std::ofstream out("out.txt");
+std::stringstream tout = std::stringstream();
+std::ostringstream garbage;
+
+const char garbage_marker[] = "garbage out: ",
+begin_marker[] = "BENCH_BEGIN: ",
+end_marker[] = "BENCH_END in time: ";
+using std::endl;
+//using arith = LongArith;
+template<typename arith>
+void simple_operation_benchmark()
+{
+    tout << begin_marker << "Simple" << endl;
+    const size_t begin = rdtsc();
+
+    arith a;
+    for (size_t i = 0; i < 1000000; ++i)
+        ++a;
+    garbage << a;
+    arith b = arith::fromString("1654984191651891");
+    for (size_t i = 0; i < 1000000; ++i)
+        ++b;
+    garbage << b;
+
+    a = arith(100000);
+    for (arith i = 0; i < a; ++i)
+        b += arith(15057);
+    garbage << b;
+
+    tout << "\tPlus: " << rdtsc() - begin << endl;
+    const size_t t = rdtsc();
+    a /= 10;
+    b = 1;
+    for (arith i = 0; i < a; ++i)
+        b = b * 2;
+    garbage << b;
+    tout << "\tMult: " << rdtsc() - t << endl;
+    const size_t end = rdtsc();
+    tout << end_marker << end - begin << endl;
+}
+
+
+template<typename arith>
+void vector_op_benchmark()
+{
+    tout << begin_marker << "VECT" << endl;
+    const size_t begin = rdtsc();
+    std::vector<arith> t;
+    arith M(1000000);
+    for (arith i = 0; i < M; ++i)
+    {
+        if (rand() % 100 > 95)
+        {
+            t.push_back(rand() % 1000);
+        }
+        else
+        {
+            arith tmp = rand() % 1000;
+            for (size_t i = 0; i < 10;++i)
+                tmp *= rand() % 1000;
+            t.push_back(tmp);
+        }
+    }
+    const size_t end = rdtsc();
+    tout << end_marker << end - begin << endl;
+    for (auto& tmp : t)
+        garbage << tmp;
+}
 
 int main()
 {
     using namespace  std;
+
+    const char old_label[] = "Old impl\n", new_label[] = "New impl\n";
+   // tout << old_label;
+   // simple_operation_benchmark<LA_Old>();
+    tout << new_label;
+    simple_operation_benchmark<LongArith>();
+
+    //tout << old_label;
+    //vector_op_benchmark<LA_Old>();
+    tout << new_label;
+    vector_op_benchmark<LongArith>();
+
+
+    out << tout.str();
+    ofstream("tmp.txt") << garbage_marker << garbage.str();
+
     size_t very_begin = rdtsc();
     //    LongArith::test();
     LongArith a(5);
@@ -176,7 +259,7 @@ int main()
     out << "FINISHED\n";
     out << sizeof(LongArith) << "\n";
     out << "Total ticks " << rdtsc() - very_begin;
-    system("pause");
+   // system("pause");
     return 0;
 }
 
