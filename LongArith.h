@@ -244,8 +244,8 @@ protected:
         }
         inline  digit_t& operator[](const size_t index);
         inline const digit_t& operator[](const size_t index)const;
-        inline size_t size()const;
-        inline size_t capacity() const;
+        inline size_t size()const noexcept;
+        inline size_t capacity() const noexcept;
         inline void resize(const size_t new_size);
         inline void reserve(const size_t new_capacity);
         inline void clear();

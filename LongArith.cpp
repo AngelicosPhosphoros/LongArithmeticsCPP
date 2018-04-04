@@ -1181,12 +1181,12 @@ const digit_t & LongArith::container_union::operator[](const size_t index) const
     return is_local ? local_data.data[index] : heap_data.vdata[index];
 }
 
-size_t LongArith::container_union::size() const
+size_t LongArith::container_union::size() const noexcept
 {
     return is_local ? local_data.size : heap_data.vdata.size();
 }
 
-size_t LongArith::container_union::capacity() const
+size_t LongArith::container_union::capacity() const noexcept
 {
     return is_local ? local_dt::container_capacity : heap_data.vdata.capacity();
 }
@@ -1253,11 +1253,7 @@ void LongArith::container_union::push_back(const digit_t val)
 
 digit_t LongArith::container_union::back() const
 {
-    //assert(size() > 0);
-    if (size() == 0)
-    {
-        throw "error";
-    }
+    assert(size() > 0);
     if (is_local)
     {
         return local_data.data[local_data.size - 1];
