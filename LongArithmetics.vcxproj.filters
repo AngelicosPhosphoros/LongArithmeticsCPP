@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="LongArith.cpp">
+    <ClCompile Include="LongArithmeticCPP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LongArithmeticCPP.cpp">
+    <ClCompile Include="LongArithVect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LongArith.h">
+    <ClInclude Include="LongArithVect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -110,11 +110,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="LongArith.cpp" />
+    <ClCompile Include="LongArithVect.cpp" />
     <ClCompile Include="LongArithmeticCPP.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LongArith.h" />
+    <ClInclude Include="LongArithVect.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
