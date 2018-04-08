@@ -1064,7 +1064,7 @@ int LongArith::sign() const noexcept
 
 std::ostream& operator<<(std::ostream& os, const LongArith& obj)
 {
-    return os << obj.toString();
+    return os << obj.to_string();
 }
 
 std::istream& operator >> (std::istream& is, LongArith& obj)
@@ -1074,7 +1074,7 @@ std::istream& operator >> (std::istream& is, LongArith& obj)
 
     try
     {
-        obj = LongArith::fromString(s);
+        obj = LongArith::from_string(s);
     }
     catch (std::invalid_argument&)
     {
@@ -1131,7 +1131,7 @@ LongArith::LongArith() :storage()
     storage.push_back(0);
 }
 
-std::string LongArith::toString() const
+std::string LongArith::to_string() const
 {
     std::string res;
     res.reserve(storage.size()*LongArith::DIGIT_STRING_LENGTH + int(get_negative()));
@@ -1154,7 +1154,7 @@ std::string LongArith::toString() const
 }
 
 
-LongArith LongArith::fromString(const std::string& arg)
+LongArith LongArith::from_string(const std::string& arg)
 {
     using namespace std;
     // Trim beginning

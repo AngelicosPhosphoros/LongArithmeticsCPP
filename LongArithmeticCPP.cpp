@@ -45,7 +45,7 @@ void simple_operation_benchmark()
     for (size_t i = 0; i < 1000000; ++i)
         ++a;
     garbage << a;
-    arith b = arith::fromString("1654984191651891");
+    arith b = arith::from_string("1654984191651891");
     for (size_t i = 0; i < 1000000; ++i)
         ++b;
     garbage << b;
@@ -209,7 +209,7 @@ int main()
     out << b << "\n";
     b = -a;
     out << b << "\n";
-    b = -(LongArith::fromString("15465342342342347489719841234234878") + a + b + LongArith(1000));
+    b = -(LongArith::from_string("15465342342342347489719841234234878") + a + b + LongArith(1000));
     out << b << "\n";
     b = -b;
     out << b << "\n";
@@ -228,19 +228,19 @@ int main()
     out << ++a << ++a;
     out << --a << --a << endl;
 
-    out << (b = LongArith::fromString("+154654654879498415984984189491941987489719841")) << endl;
+    out << (b = LongArith::from_string("+154654654879498415984984189491941987489719841")) << endl;
     out << a << endl;
     //cin >> a;
     out << a << endl;
     out << a - b << endl;
     out << b - a << endl;
     out << a + b << endl;
-    a = LongArith::fromString("+154654654879498415984984189491941987489719841");
-    b = LongArith::fromString("468789871987198719871919000000000");
+    a = LongArith::from_string("+154654654879498415984984189491941987489719841");
+    b = LongArith::from_string("468789871987198719871919000000000");
     a *= b;
     out << "Check zero\n";
     a = 0;
-    b = LongArith::fromString("468789871987198719871919");
+    b = LongArith::from_string("468789871987198719871919");
     out << a*b << "\n";
 
     out << "Time test\n";
@@ -277,8 +277,8 @@ int main()
 
 
     LongArith c = a*b;
-    //    c = LongArith::fromString(LongArith::gen2(50, 12))
-    //       *LongArith::fromString(LongArith::gen2(40, 7));
+    //    c = LongArith::from_string(LongArith::gen2(50, 12))
+    //       *LongArith::from_string(LongArith::gen2(40, 7));
     c = c * 5;
     c *= 5;
     a = 1;
@@ -313,17 +313,17 @@ int main()
     out << dividable << " / " << divider << "\n";
     std::tie(fraction, rem) = LongArith::fraction_and_remainder(dividable, divider);
     out << "\t= " << fraction << " ; " << rem << "\n";
-    out << LongArith::fromString("654897491581065498498719467981567498") / LongArith::fromString("49879871") << " ; " <<
-        LongArith::fromString("654897491581065498498719467981567498") % LongArith::fromString("49879871") << "\n";
-    LongArith fr = LongArith::fromString("654897491581065498498719467981567498");
-    fr /= LongArith::fromString("49879871");
+    out << LongArith::from_string("654897491581065498498719467981567498") / LongArith::from_string("49879871") << " ; " <<
+        LongArith::from_string("654897491581065498498719467981567498") % LongArith::from_string("49879871") << "\n";
+    LongArith fr = LongArith::from_string("654897491581065498498719467981567498");
+    fr /= LongArith::from_string("49879871");
     {
         std::vector<LongArith> vect; vect.reserve(1000);
         out << "CHECK VECTOR TIME: ";
         const size_t vect_c = rdtsc();
         for (size_t i = 0; i < 1000; ++i)
         {
-            vect.push_back(LongArith::fromString("468787974191"));
+            vect.push_back(LongArith::from_string("468787974191"));
         }
         out << rdtsc() - vect_c << " ";
         for (auto& v : vect)
@@ -338,7 +338,7 @@ int main()
         const size_t vect_c = rdtsc();
         for (size_t i = 0; i < 1000; ++i)
         {
-            vect.push_back(LongArith::fromString("468787974191"));
+            vect.push_back(LongArith::from_string("468787974191"));
         }
         out << rdtsc() - vect_c << " ";
         for (auto& v : vect)

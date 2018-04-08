@@ -76,12 +76,12 @@ public:
 
 
     // \brief Converts string in decimal format
-    std::string toString() const;
+    std::string to_string() const;
 
     // \brief Builds long number from decimal string
     // \detailed Builds long number from string, which can begin from '-'
     //           or '+' and can contain only decimal symbols
-    static LongArith fromString(const std::string& s);
+    static LongArith from_string(const std::string& s);
 
     // \brief Returns sign of number
     // \return Returns -1, if negative; 0, if 0; 1 if positive
