@@ -132,7 +132,7 @@ static inline signed short compare_absolute_vectors(const container_type& left, 
         return -1;
     if (left.size() < right.size())
         return 1;
-    ssize_t index = left.size() - 1;
+    size_t index = left.size() - 1;
     while (index > 0 && left[index] == right[index])
         index--;
     if (left[index] == right[index])
@@ -192,7 +192,7 @@ inline void unchecked_internal_add_array(container_type& original, const contain
 // \param original is changing vector
 // \param addition is change
 // \param shift is first index of original to change
-static void add_array(container_type &original, const container_type &addition, const size_t& shift)
+static void add_array(container_type &original, const container_type &addition, const size_t shift)
 {
     // to prevent errors
     if (&original == &addition)
@@ -286,10 +286,7 @@ static void inline dec1_array(container_type &num)
         }
         ++index;
     }
-    if (num.size() > 1 && index == num.size() && num.back() == 0)
-    {
-        num.pop_back();
-    }
+    clean_leading_zeros(num);
     assert(!cont);
 }
 
@@ -321,30 +318,46 @@ static void increment_array(container_type &arr, compute_t change)
     }
 }
 // This will decrease absolute value of array.
-// \param change must be lower than DIGIT_BASE
+// \param change must be lower than DIGIT_BASE squared
 // \return if arr>change return true else false (means change digit)
 static bool decrement_array(container_type &arr, digit_t change)
 {
     assert(change >= 0);
-    assert(change < DIGIT_BASE);
-    compute_t comp_result = TO_COMPUTE_T(arr[0]) - change;
-    if (comp_result >= 0)
+    assert(change < DIGIT_BASE*DIGIT_BASE);
+
+    compute_t current_val = (arr.size() > 1) ?
+        (arr[0] + arr[1] * DIGIT_BASE) : arr[0];
+
+    if (change > current_val)
     {
-        arr[0] = TO_DIGIT_T(comp_result);
-        return true;
-    }
-    if (arr.size() == 1)
-    {
-        arr[0] = TO_DIGIT_T(-comp_result);
-        return false;
+        // zero lower digits
+        for (size_t i = 0; i < std::min<size_t>(2, arr.size());++i)
+        {
+            arr[i] = 0;
+        }
+        change -= TO_DIGIT_T(current_val);
+
+        if (arr.size() > 2)
+        {
+            change -= 1;
+            dec1_array(arr);
+            arr[0] -= TO_DIGIT_T(change % DIGIT_BASE);
+            arr[1] -= TO_DIGIT_T(change / DIGIT_BASE);
+            return true;
+        }
+        else // We changed sign
+        {
+            increment_array(arr, change);
+            return false;
+        }
     }
     else
     {
-        assert(DIGIT_BASE + comp_result >= 0);
-        arr[0] = 0;
-        dec1_array(arr);
-        arr[0] = TO_DIGIT_T(DIGIT_BASE + comp_result);
-        return true;
+        const compute_t comp_result = current_val - change;
+        arr[0] = TO_DIGIT_T(comp_result % DIGIT_BASE);
+        if (arr.size() > 1)
+            arr[1] = TO_DIGIT_T(comp_result / DIGIT_BASE);
+        return false;
     }
 }
 
@@ -364,7 +377,7 @@ static void mult_small(container_type& big_number, const compute_t multiplicator
         return;
     default:
         assert(multiplicator < TO_COMPUTE_T(DIGIT_BASE)*DIGIT_BASE);
-        compute_t trans_product = 0, mult = TO_COMPUTE_T(multiplicator);
+        compute_t trans_product = 0, mult = multiplicator;
         for (size_t i = 0; i < big_number.size(); i++)
         {
             trans_product = trans_product + mult * TO_COMPUTE_T(big_number[i]);
@@ -625,17 +638,20 @@ LongArith& LongArith::operator+=(const LongArith& change)&
     }
     else
     {
+        bool res_negative;
         if (compare_absolute_values(*this, change) <= 0)
         {
+            res_negative = this->get_negative();
             substract_array(storage, change.storage);
         }
         else
         {
-            set_negative(change.get_negative());
+            res_negative = change.get_negative();
             container_type tmp(storage);
             storage = container_type(change.storage);
-            substract_array(storage, tmp);
+            substract_array(storage, tmp);\
         }
+        set_negative(res_negative);
     }
     check_zero();
     return *this;
@@ -649,16 +665,19 @@ LongArith& LongArith::operator+=(LongArith&& change)&
     }
     else
     {
+        bool res_negative;
         if (compare_absolute_values(*this, change) <= 0)
         {
+            res_negative = this->get_negative();
             substract_array(storage, change.storage);
         }
         else
         {
-            set_negative(change.get_negative());
+            res_negative = change.get_negative();
             std::swap(change.storage, storage);
             substract_array(storage, change.storage);
         }
+        set_negative(res_negative);
     }
     check_zero();
     return *this;
@@ -666,32 +685,23 @@ LongArith& LongArith::operator+=(LongArith&& change)&
 
 LongArith& LongArith::operator+=(long change)&
 {
-    if (std::numeric_limits<compute_t>::max() < std::numeric_limits<long>::max())
+    // Handle extreme values safely
+    if (std::numeric_limits<compute_t>::max() < std::numeric_limits<long>::max() || change > DIGIT_BASE*DIGIT_BASE || change < -DIGIT_BASE*DIGIT_BASE)
     {
         return *this += LongArith(change);
     }
+
     if (get_negative() == change < 0)
     {
         compute_t change_b(change); // to avoid integer overflow
-        if (change_b == std::numeric_limits<compute_t>::min())
-        {
-            inc1_array(storage);
-            change_b++;
-        }
-        increment_array(storage, change < 0 ? -change_b : change_b);
+        increment_array(storage, change_b < 0 ? -change_b : change_b);
     }
     else
     {
-        if (change >= DIGIT_BASE || change <= -TO_COMPUTE_T(DIGIT_BASE))
-        {
-            (*this) += LongArith(change);
-        }
-        else
-        {
-            digit_t add = (change < 0) ? -change : change;
-            bool not_changed_sign = decrement_array(storage, add);
-            set_negative(not_changed_sign == get_negative());
-        }
+        const bool old_negative = get_negative();
+        digit_t add = (change < 0) ? -change : change;
+        const bool not_changed_sign = decrement_array(storage, add);
+        set_negative(not_changed_sign == old_negative);
     }
     check_zero();
     return *this;
@@ -752,7 +762,7 @@ LongArith& LongArith::operator-=(long change)&
 LongArith& LongArith::operator--()&
 {
     // this variant runs 1.4x faster than this-=1
-    if (!get_negative() && equalsZero())
+    if (!get_negative() && equals_zero())
         set_negative(true);
     if (get_negative())
     {
@@ -770,10 +780,10 @@ LongArith& LongArith::operator--()&
 LongArith operator*(const LongArith& a, const LongArith& b)
 {
     LongArith res(0);
-    if (!(a.equalsZero() || b.equalsZero()))
+    if (!(a.equals_zero() || b.equals_zero()))
     {
-        res.set_negative(a.get_negative() != b.get_negative());
         res.storage = mult_big(a.storage, b.storage);
+        res.set_negative(a.get_negative() != b.get_negative());
     }
     return res;
 }
@@ -785,16 +795,18 @@ LongArith & LongArith::operator*=(const LongArith & multiplier)&
 
 LongArith& LongArith::operator*=(long multiplier)&
 {
+    const bool calculated_negative = get_negative() != (multiplier < 0);
     if (multiplier < 0)
     {
         if (multiplier == std::numeric_limits<long>::min())
         {
-            *this *= LongArith(multiplier);
+            return *this *= LongArith(multiplier);
         }
         this->set_negative(!this->get_negative());
         multiplier = -multiplier;
     }
     mult_small(storage, multiplier);
+    set_negative(calculated_negative);
     return *this;
 }
 
@@ -803,13 +815,13 @@ std::pair<LongArith, LongArith> LongArith::fraction_and_remainder(const LongArit
 {
     typedef std::pair<LongArith, LongArith> t_result;
     // Argument check
-    if (divider.equalsZero())
+    if (divider.equals_zero())
     {
         throw std::logic_error("Division by zero");
     }
 
     // Simple Cases
-    if (dividable.equalsZero())
+    if (dividable.equals_zero())
     {
         return t_result(0, 0);
     }
@@ -843,17 +855,46 @@ std::pair<LongArith, long> LongArith::fraction_and_remainder(const LongArith & d
     }
 
     typedef std::pair<LongArith, long> t_result;
+
+    if (divider == 1)
+    {
+        return t_result(dividable, 0);
+    }
+
+    if (divider == -1)
+    {
+        return t_result(-dividable, 0);
+    }
+
     if (std::numeric_limits<long>::min() == divider)
     {
         auto res = fraction_and_remainder(dividable, LongArith(divider));
         return t_result(std::move(res.first), static_cast<long>(res.second.to_plain_int()));
     }
-    //static_assert(false, "Not finished");
-    return std::pair<LongArith, long>();
+
+    const unsigned long u_div = (divider >= 0) ? divider : -divider;
+
+    LongArith fraction;
+    unsigned long remainder = 0;
+    for (size_t i1 = dividable.storage.size(); i1 > 0; --i1)
+    {
+        const size_t i = i1 - 1;
+        const compute_t value = dividable.storage[i] + remainder*DIGIT_BASE;
+        fraction.storage.push_back(TO_DIGIT_T(value / u_div));
+        remainder %= u_div;
+    }
+
+    std::reverse(fraction.storage.begin(), fraction.storage.end());
+    clean_leading_zeros(fraction.storage);
+    
+    fraction.set_negative(divider < 0 != dividable.get_negative());
+    const signed long signed_remainder = dividable.get_negative() ? -static_cast<signed long>(remainder) : remainder;
+
+    return t_result(std::move(fraction), signed_remainder);
 }
 
 // Utility for constant calculation
-namespace hidden 
+namespace hidden
 {
     size_t len_10_in_DIGIT_BASE()
     {
@@ -884,12 +925,15 @@ LongArith LongArith::fast_divide_by_10(const size_t power) const
         return LongArith(0);
 
     LongArith result;
-    result.set_negative(get_negative());
     result.storage.resize(storage.size() - digits_skipped);
     memcpy(&result.storage[0], &storage[digits_skipped], sizeof(digit_t)*(storage.size() - digits_skipped));
 
     if (remain_div == 1)
+    {
+        result.set_negative(get_negative());
+        result.check_zero();
         return result;
+    }
 
     for (size_t i = 0; i + 1 < result.storage.size(); ++i)
     {
@@ -904,6 +948,9 @@ LongArith LongArith::fast_divide_by_10(const size_t power) const
     {
         result.storage.pop_back();
     }
+
+    result.set_negative(get_negative());
+    result.check_zero();
     return result;
 }
 
@@ -920,7 +967,6 @@ LongArith LongArith::fast_remainder_by_10(const size_t power) const
 
     const size_t copy_size = (digits_skipped >= storage.size()) ? storage.size() : (digits_skipped + ((remain > 0) ? 1 : 0));
     LongArith result;
-    result.set_negative(get_negative());
     result.storage.resize(copy_size);
     memcpy(&result.storage[0], &storage[0], copy_size * sizeof(digit_t));
 
@@ -932,6 +978,8 @@ LongArith LongArith::fast_remainder_by_10(const size_t power) const
 
     clean_leading_zeros(result.storage);
 
+    result.set_negative(get_negative());
+    result.check_zero();
     return result;
 }
 
@@ -999,16 +1047,16 @@ bool LongArith::operator!=(const LongArith& other) const
     return !this->operator==(other);
 }
 
-bool LongArith::equalsZero() const
+bool LongArith::equals_zero() const noexcept
 {
     return storage.size() == 1 && storage[0] == 0;
 }
 
-int LongArith::sign() const
+int LongArith::sign() const noexcept
 {
     if (get_negative())
         return -1;
-    if (equalsZero())
+    if (equals_zero())
         return 0;
     return 1;
 }
@@ -1028,7 +1076,7 @@ std::istream& operator >> (std::istream& is, LongArith& obj)
     {
         obj = LongArith::fromString(s);
     }
-    catch (std::invalid_argument)
+    catch (std::invalid_argument&)
     {
         obj = 0;
     }
@@ -1036,20 +1084,46 @@ std::istream& operator >> (std::istream& is, LongArith& obj)
     return r;
 }
 
-LongArith::LongArith(compute_t default_value) :storage()
+LongArith::LongArith(long default_value) :storage()
 {
-    set_negative(default_value < 0);
+    const bool negativity = default_value < 0;
     // Avoiding integer overflow
-    if (default_value == std::numeric_limits<compute_t>::min())
+    if (default_value == std::numeric_limits<long>::min())
     {
-        ++default_value;
-        storage.push_back(1);
+        default_value += 2;
+        storage.push_back(2);
     }
     else
     {
         storage.push_back(0);
     }
-    increment_array(storage, (default_value < 0) ? -default_value : default_value);
+
+    if (default_value < 0)
+    {
+        default_value = -default_value;
+    }
+
+    if (std::numeric_limits<long>::max() > std::numeric_limits<compute_t>::max() && default_value > std::numeric_limits<compute_t>::max())
+    {
+        container_type temp;
+        while (default_value)
+        {
+            temp.push_back(default_value % DIGIT_BASE);
+            default_value /= DIGIT_BASE;
+        }
+        add_array(storage, temp, 0);
+    }
+    else if (default_value > std::numeric_limits<compute_t>::max() - 2)
+    {
+        increment_array(storage, default_value / 2);
+        increment_array(storage, default_value - default_value / 2);
+    }
+    else
+    {
+        increment_array(storage, default_value);
+    }
+
+    set_negative(negativity);
 }
 
 LongArith::LongArith() :storage()
@@ -1062,7 +1136,7 @@ std::string LongArith::toString() const
     std::string res;
     res.reserve(storage.size()*LongArith::DIGIT_STRING_LENGTH + int(get_negative()));
 
-    if (get_negative() && !equalsZero())
+    if (get_negative() && !equals_zero())
         res += '-';
     res += std::to_string(storage.back());
     for (size_t index = storage.size() - 1; index; --index)
@@ -1264,7 +1338,7 @@ LongArith::container_union & LongArith::container_union::operator=(container_uni
     return *this;
 }
 
-void LongArith::container_union::swap(container_union & other)&
+void LongArith::container_union::swap(container_union & other)& noexcept
 {
     if (this == &other)
         return;

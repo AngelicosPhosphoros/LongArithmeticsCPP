@@ -25,7 +25,8 @@ uint64_t rdtsc() {
 #endif
 
 #include <fstream>
-std::ofstream out("out.txt");
+//std::ofstream out("out.txt");
+std::ostream& out = std::cout;
 std::stringstream tout = std::stringstream();
 std::ostringstream garbage;
 
@@ -100,7 +101,8 @@ void fast_division_benchmark()
     const size_t begin = rdtsc();
 
     std::vector<LongArith> t;
-    LongArith M(10000);
+    constexpr size_t N = 100000;
+    LongArith M(N);
     for (LongArith i = 0; i < M; ++i)
     {
         LongArith tmp = rand() % 1000;
@@ -123,7 +125,7 @@ void fast_division_benchmark()
 
 
     const size_t first_begin = rdtsc();
-    for (size_t i = 0; i < 10000; ++i)
+    for (size_t i = 0; i < N; ++i)
     {
         auto r = LongArith::fraction_and_remainder(t[i], dividers[i]);
         result1.emplace_back(std::move(r));
@@ -131,7 +133,7 @@ void fast_division_benchmark()
     const size_t first_end = rdtsc();
 
     const size_t second_begin = rdtsc();
-    for (size_t i = 0; i < 10000; ++i)
+    for (size_t i = 0; i < N; ++i)
     {
         result2.emplace_back(
             t[i].fast_divide_by_10(i),
@@ -156,7 +158,10 @@ void fast_division_benchmark()
         }
     }
 
-    std::ofstream("division_errors.txt") << eout.str();
+    if (!correct)
+    {
+        std::ofstream("division_errors.txt") << eout.str();
+    }
 
     tout << "Simple division time: " << first_end - first_begin << endl;
     tout << "Fast division time: " << second_end - second_begin << endl;
@@ -205,10 +210,15 @@ int main()
     b = -a;
     out << b << "\n";
     b = -(LongArith::fromString("15465342342342347489719841234234878") + a + b + LongArith(1000));
+    out << b << "\n";
     b = -b;
+    out << b << "\n";
     b -= a;
+    out << b << "\n";
     b -= LongArith(a);
+    out << b << "\n";
     b = -std::move(b);
+    out << b << "\n";
     b = b;
     out << b << "\n";
     b += b;

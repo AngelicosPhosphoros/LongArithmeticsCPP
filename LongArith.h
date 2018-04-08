@@ -35,11 +35,11 @@ public:
 private:
 
     // getters and setters
-    inline bool get_negative()const
+    inline bool get_negative()const noexcept
     {
         return storage.negative();
     }
-    inline void set_negative(const bool neg)
+    inline void set_negative(const bool neg) noexcept
     {
         storage.set_negative(neg);
     }
@@ -47,7 +47,7 @@ private:
     // make negative zero normal
     inline void check_zero()
     {
-        if (get_negative() && equalsZero())
+        if (get_negative() && equals_zero())
             set_negative(false);
     }
 
@@ -58,7 +58,7 @@ private:
 
 public:
 
-    inline void swap(LongArith& other)& {
+    inline void swap(LongArith& other)& noexcept {
         if (&other != this) {
             this->storage.swap(other.storage);
         }
@@ -68,7 +68,7 @@ public:
     LongArith();
 
     // With initial value
-    LongArith(compute_t default_value);
+    LongArith(long default_value);
 
     LongArith(const LongArith &original) = default;
 
@@ -87,7 +87,7 @@ public:
     // \return Returns -1, if negative; 0, if 0; 1 if positive
     // \detailed Calculate sign of number.
     //             complexity is O(1)
-    int sign() const;
+    int sign() const noexcept;
 
     // \brief Divide dividend by divider, returns fraction and remainder
     // \return Pair of fraction (first) and remainder (second)
@@ -193,7 +193,7 @@ public:
     bool operator!=(const LongArith &other) const;
 
     // \brief true, if zero, false otherwise
-    bool equalsZero() const;
+    bool equals_zero() const noexcept;
 
     // other
     LongArith &operator=(const LongArith &other)& = default;
@@ -225,7 +225,7 @@ protected:
             bool is_local : 1;
             bool negative : 1;
             std::vector<digit_t> vdata;
-            heap_dt() noexcept: is_local(false), vdata() {}
+            heap_dt(): is_local(false), vdata() {}
         };
 
         // Checks
@@ -243,12 +243,12 @@ protected:
         ~container_union();
         inline container_union& operator= (const container_union& other);
         inline container_union& operator= (container_union&& tmp) noexcept;
-        void swap(container_union& other)&;
+        void swap(container_union& other)& noexcept;
     public:
-        inline bool negative()const {
+        inline bool negative()const noexcept {
             return is_local ? local_data.negative : heap_data.negative;
         }
-        inline void set_negative(const bool v) {
+        inline void set_negative(const bool v) noexcept {
             if (is_local)
                 local_data.negative = v;
             else
@@ -290,7 +290,7 @@ private:
 
 namespace std {
     template<>
-    inline void swap<LongArith>(LongArith& a, LongArith& b) {
+    inline void swap<LongArith>(LongArith& a, LongArith& b) noexcept {
         a.swap(b);
     }
 }
