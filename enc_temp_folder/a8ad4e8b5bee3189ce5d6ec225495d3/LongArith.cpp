@@ -1349,7 +1349,7 @@ void LongArith::container_union::swap(container_union & other)& noexcept
         memcpy(this, &other, sz);
         memcpy(&other, tmp, sz);
     }
-    else // Copy local object to stack than move bytes of heap object to new place
+    else
         if (l_stack && !r_stack)
         {
             container_union loc_copy(*this);

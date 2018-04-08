@@ -214,31 +214,30 @@ protected:
     //****************** INTERNAL TYPES ****************************
     //typedef std::vector<digit_t> container_type;
     // This is container that work same way as vector but keep small storages directly in stack
-    union container_union {
-        // types
-        struct local_dt {
-            bool is_local : 1;
-            bool negative : 1;
-            unsigned short size : 4;
-            // Minimum of max value of 4 bit size and vector memory amount
-            constexpr static size_t container_capacity = std::min<size_t>(0xF, sizeof(std::vector<digit_t>) / sizeof(digit_t));
-            digit_t data[container_capacity];
-            local_dt()noexcept : is_local(true), size(0), negative(false) {}
-            local_dt(const bool is_local, const bool is_negative, size_t size) noexcept;
-        };
+    struct container_union {
+
+        // Local data
+        unsigned short is_local : 1;
+        unsigned short is_negative : 1;
+        uint8_t local_size;
+        digit_t* data_pointer;
+
         struct heap_dt {
-            bool is_local : 1;
-            bool negative : 1;
-            std::vector<digit_t> vdata;
-            heap_dt(): is_local(false), vdata() {}
+            size_t size;
+            size_t capacity;
+        };
+        // Minimum of max value of local size and heap_dt memory amount
+        constexpr static size_t local_capacity = std::min<size_t>(std::numeric_limits<uint8_t>::max(),
+            sizeof(heap_dt) / sizeof(digit_t));
+        // various data
+        union
+        {
+            digit_t local_data[local_capacity];
+            heap_dt heap_data;
         };
 
-        // Checks
-        static_assert(std::is_nothrow_move_assignable<std::vector<digit_t>>::value && std::is_nothrow_move_constructible<std::vector<digit_t>>::value, "nothrow guarantee check failed");
-        static_assert(std::is_nothrow_move_assignable<local_dt>::value && std::is_nothrow_move_constructible<local_dt>::value, "nothrow guarantee check failed");
-        static_assert(std::is_nothrow_move_assignable<heap_dt>::value && std::is_nothrow_move_constructible<heap_dt>::value, "nothrow guarantee check failed");
-
-        container_union();
+        // Constructors
+        container_union() noexcept;
         container_union(const container_union& other);
         container_union(container_union&& tmp) noexcept;
         template<typename Iter1, typename Iter2>
@@ -246,29 +245,26 @@ protected:
         template<>
         container_union(const digit_t * beg, const digit_t * end);
         ~container_union();
-        inline container_union& operator= (const container_union& other);
-        inline container_union& operator= (container_union&& tmp) noexcept;
+        container_union& operator= (const container_union& other);
+        container_union& operator= (container_union&& tmp) noexcept;
         void swap(container_union& other)& noexcept;
     public:
         inline bool negative()const noexcept {
-            return is_local ? local_data.negative : heap_data.negative;
+            return is_negative;
         }
         inline void set_negative(const bool v) noexcept {
-            if (is_local)
-                local_data.negative = v;
-            else
-                heap_data.negative = v;
+            is_negative = v;
         }
         inline  digit_t& operator[](const size_t index);
         inline const digit_t& operator[](const size_t index)const;
         inline size_t size()const noexcept;
         inline size_t capacity() const noexcept;
-        inline void resize(const size_t new_size);
-        inline void reserve(const size_t new_capacity);
+        void resize(const size_t new_size);
+        void reserve(const size_t new_capacity);
         inline void clear();
-        inline void push_back(const digit_t val);
-        inline digit_t back() const;
-        inline void pop_back();
+        void push_back(const digit_t val);
+        digit_t back() const;
+        void pop_back();
 
         // Iterators
         inline digit_t* begin() noexcept;
@@ -278,12 +274,8 @@ protected:
         inline const digit_t* end()const noexcept;
 
     private:
-        // Union data
-        bool is_local : 1; // same as local_data.is_local and heap_data.is_local
-        local_dt local_data;
-        heap_dt heap_data;
-        static void copy_heap_to_stack(local_dt & dest, const heap_dt & source) noexcept;
-        void switch_to_heap(const size_t reserve_amount);
+        inline void switch_to_heap(const size_t reserve_amount);
+        inline void reallocate(const size_t new_capacity);
     };
     typedef container_union container_type;
     static_assert(std::is_nothrow_move_assignable<container_type>::value && std::is_nothrow_move_constructible<container_type>::value, "nothrow guarantee check failed");
