@@ -35,9 +35,11 @@ const char garbage_marker[] = "garbage out: ",
 begin_marker[] = "BENCH_BEGIN: ",
 end_marker[] = "BENCH_END in time: ";
 using std::endl;
-//using arith = LongArithVect;
+
+#define NOINLINE __declspec(noinline)
+
 template<typename arith>
-void simple_operation_benchmark()
+NOINLINE void simple_operation_benchmark()
 {
     tout << begin_marker << "Simple" << endl;
     const size_t begin = rdtsc();
@@ -70,7 +72,7 @@ void simple_operation_benchmark()
 
 
 template<typename arith>
-void vector_op_benchmark()
+NOINLINE void vector_op_benchmark()
 {
     tout << begin_marker << "VECT" << endl;
     const size_t begin = rdtsc();
@@ -106,6 +108,8 @@ int main()
     simple_operation_benchmark<LongArithVect>();
     tout << union_label;
     simple_operation_benchmark<LongArithUnion>();
+    
+    tout << endl;
 
     tout << vect_label;
     vector_op_benchmark<LongArithVect>();
