@@ -881,7 +881,7 @@ std::pair<LongArith, long> LongArith::fraction_and_remainder(const LongArith & d
         const size_t i = i1 - 1;
         const compute_t value = dividable.storage[i] + remainder*DIGIT_BASE;
         fraction.storage.push_back(TO_DIGIT_T(value / u_div));
-        remainder %= u_div;
+        remainder = value % u_div;
     }
 
     std::reverse(fraction.storage.begin(), fraction.storage.end());
@@ -1098,12 +1098,18 @@ LongArith::LongArith(long default_value) :storage()
         storage.push_back(0);
     }
 
+    if (default_value == 0)
+    {
+        set_negative(false);
+        return;
+    }
+
     if (default_value < 0)
     {
         default_value = -default_value;
     }
 
-    if (std::numeric_limits<long>::max() > std::numeric_limits<compute_t>::max() && default_value > std::numeric_limits<compute_t>::max())
+    if (std::numeric_limits<long>::max() > std::numeric_limits<compute_t>::max() && default_value > static_cast<long>(std::numeric_limits<compute_t>::max()))
     {
         container_type temp;
         while (default_value)
@@ -1113,10 +1119,10 @@ LongArith::LongArith(long default_value) :storage()
         }
         add_array(storage, temp, 0);
     }
-    else if (default_value > std::numeric_limits<compute_t>::max() - 2)
+    else if (static_cast<compute_t>(default_value) > std::numeric_limits<compute_t>::max() - 3)
     {
         increment_array(storage, default_value / 2);
-        increment_array(storage, default_value - default_value / 2);
+        increment_array(storage, default_value - (default_value / 2));
     }
     else
     {

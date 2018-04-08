@@ -25,8 +25,8 @@ uint64_t rdtsc() {
 #endif
 
 #include <fstream>
-//std::ofstream out("out.txt");
-std::ostream& out = std::cout;
+std::ofstream out("out.txt");
+//std::ostream& out = std::cout;
 std::stringstream tout = std::stringstream();
 std::ostringstream garbage;
 
@@ -171,6 +171,92 @@ void fast_division_benchmark()
     tout << end_marker << end - begin << endl;
 }
 
+
+void compare_long_and_simple_div()
+{
+    tout << begin_marker << "PLAIN DIV" << endl;
+    const size_t begin = rdtsc();
+
+    std::vector<LongArith> t;
+    constexpr size_t N = 100000;
+    LongArith M(N);
+    for (LongArith i = 0; i < M; ++i)
+    {
+        LongArith tmp = rand() % 1000;
+        for (size_t i = 0; i < 100;++i)
+            tmp *= rand() % 1000;
+        t.push_back(tmp);
+    }
+
+    std::vector<int> dividers;
+    for (LongArith i = 0; i < M; ++i)
+    {
+        int v;
+        do {
+            v = rand();
+        } while (v==0);
+        dividers.emplace_back(v);
+    }
+
+    for (auto v : dividers)
+    {
+        if (v == 0)
+            throw "Unexpected";
+    }
+
+    tout << "Set generated in " << rdtsc() - begin << endl;
+
+    std::vector<std::pair<LongArith, LongArith>> result1;
+    std::vector<std::pair<LongArith, long>> result2;
+    result1.reserve(N); result2.reserve(N);
+
+
+
+    const size_t first_begin = rdtsc();
+    for (size_t i = 0; i < N; ++i)
+    {
+        auto r = LongArith::fraction_and_remainder(t[i], LongArith(dividers[i]));
+        result1.emplace_back(std::move(r));
+    }
+    const size_t first_end = rdtsc();
+
+    const size_t second_begin = rdtsc();
+    for (size_t i = 0; i < N; ++i)
+    {
+        auto r = LongArith::fraction_and_remainder(t[i], dividers[i]);
+        result2.emplace_back(std::move(r));
+    }
+    const size_t second_end = rdtsc();
+
+    std::ostringstream eout;
+
+    bool correct = true;
+    for (size_t i = 0; i < result1.size(); ++i)
+    {
+        if (result1[i].first != result2[i].first || result1[i].second.to_plain_int()!=result2[i].second)
+        {
+            correct = false;
+
+            eout << i << ":" <<
+                "\n\t" << t[i] << " / " << dividers[i] <<
+                "\n\t=" << result1[i].first << "\n\t=" << result2[i].first <<
+                "\n\t%" << result1[i].second << "\n\t%" << result2[i].second << endl;
+        }
+    }
+
+    if (!correct)
+    {
+        std::ofstream("division_errors.txt") << eout.str();
+    }
+
+    tout << "LongArith division time: " << first_end - first_begin << endl;
+    tout << "Plain division time: " << second_end - second_begin << endl;
+    tout << "Is correct: " << correct << endl;
+
+    const size_t end = rdtsc();
+    tout << end_marker << end - begin << endl;
+}
+
 int main()
 {
     using namespace  std;
@@ -188,6 +274,10 @@ int main()
 
 
     fast_division_benchmark();
+
+    compare_long_and_simple_div();
+
+
     out << tout.str();
     ofstream("tmp.txt") << garbage_marker << garbage.str();
 
