@@ -10,7 +10,7 @@
 typedef SSIZE_T ssize_t;
 #endif
 
-class LongArith
+class LongArithVect
 {
 public:
 	//****************** CONSTS **********************
@@ -40,50 +40,50 @@ private:
 	
 
 	// internal constructors
-	LongArith(compute_t default_value, size_t default_capacity);
+	LongArithVect(compute_t default_value, size_t default_capacity);
 
 	// Change the value by abs(change)
 	// bool argument added to prevent innecessary copy of change when we need to get -change
-	//void increase(const LongArith &change, bool is_same_sign);
-	//void increase(LongArith&&change, bool is_same_sign);
+	//void increase(const LongArithVect &change, bool is_same_sign);
+	//void increase(LongArithVect&&change, bool is_same_sign);
 
     // make negative zero normal
 	inline void check_zero()
     {
-        if (negative && equalsZero())
+        if (negative && equals_zero())
             negative = false;
     }
 
     // below zero if left more right, more zero if left less rigth and 0 otherwise
     // Complexity: if they has differen sizes - const; otherwise O(n)
-    static signed short compare_absolute_values(const LongArith &left, const LongArith &rigth);
+    static signed short compare_absolute_values(const LongArithVect &left, const LongArithVect &rigth);
 
 
 public:
 
-    inline void swap(LongArith& other)& {
+    inline void swap(LongArithVect& other)& {
         if (&other != this) {
             std::swap(this->storage, other.storage);
             std::swap(this->negative, other.negative);
         }
     }
 
-	LongArith(const LongArith &original);
+	LongArithVect(const LongArithVect &original);
 
-	LongArith(LongArith &&temporary);
+	LongArithVect(LongArithVect &&temporary);
 
-	LongArith(compute_t default_value) : LongArith(default_value, DEFAULT_DIGIT_CAPACITY) { }
+	LongArithVect(compute_t default_value) : LongArithVect(default_value, DEFAULT_DIGIT_CAPACITY) { }
 
     // Constructor. Initiate with zero
-	LongArith() : LongArith(0) { }
+	LongArithVect() : LongArithVect(0) { }
 
     // \brief Converts string in decimal format
-	std::string toString() const;
+	std::string to_string() const;
 
     // \brief Builds long number from decimal string
     // \detailed Builds long number from string, which can begin from '-'
     //           or '+' and can contain only decimal symbols
-	static LongArith fromString(std::string s);
+	static LongArithVect fromString(std::string s);
 
     // \brief Returns sign of number
     // \return Returns -1, if negative; 0, if 0; 1 if positive
@@ -93,11 +93,11 @@ public:
 
     // \brief Divide dividend by divider, returns fraction and remainder
     // \return Pair of fraction (first) and remainder (second)
-    static std::pair<LongArith, LongArith> FractionAndRemainder(const LongArith& dividable, const LongArith& divider);
+    static std::pair<LongArithVect, LongArithVect> fraction_and_remainder(const LongArithVect& dividable, const LongArithVect& divider);
 
     // \brief Divide dividend by divider, returns fraction and remainder
     // \return Pair of fraction (first) and remainder (second)
-    static std::pair<LongArith, long> FractionAndRemainder(const LongArith& dividable, const long divider);
+    static std::pair<LongArithVect, long> fraction_and_remainder(const LongArithVect& dividable, const long divider);
 
     // \return true, if value can be stored in compute_t
     inline bool plain_convertable()const {
@@ -111,95 +111,95 @@ public:
 
 	// \brief Arithmetic plus. Make copy of first argument. Complexity is O(n)
     // \detailed Plus. If 
-	friend LongArith operator+(LongArith a, const LongArith &b) {
+	friend LongArithVect operator+(LongArithVect a, const LongArithVect &b) {
         return std::move(a += b);
     };
 
-	friend LongArith operator+(LongArith a, LongArith &&b) {
+	friend LongArithVect operator+(LongArithVect a, LongArithVect &&b) {
         return std::move(b += std::move(a));
     }
 
-	friend LongArith operator-(LongArith left, const LongArith &rigth);
+	friend LongArithVect operator-(LongArithVect left, const LongArithVect &rigth);
 
-	friend LongArith operator *(const LongArith& a, const LongArith& b);
-    friend LongArith operator /(const LongArith& a, const LongArith& b) {
-        return LongArith::FractionAndRemainder(a, b).first;
+	friend LongArithVect operator *(const LongArithVect& a, const LongArithVect& b);
+    friend LongArithVect operator /(const LongArithVect& a, const LongArithVect& b) {
+        return LongArithVect::fraction_and_remainder(a, b).first;
     }
 
-    friend LongArith operator %(const LongArith& a, const LongArith& b) {
-        return LongArith::FractionAndRemainder(a, b).second;
+    friend LongArithVect operator %(const LongArithVect& a, const LongArithVect& b) {
+        return LongArithVect::fraction_and_remainder(a, b).second;
     }
 
 	// unary minus
-	friend LongArith operator-(const LongArith& original) {
-        LongArith result(original);
+	friend LongArithVect operator-(const LongArithVect& original) {
+        LongArithVect result(original);
         result.negative = !original.negative;
         return std::move(result);
     }
-	friend LongArith operator-(LongArith&& original) {
+	friend LongArithVect operator-(LongArithVect&& original) {
         original.negative = !original.negative;
         return std::move(original);
     }
 
 	// Assignment with arithmetical
-	LongArith & operator+=(const LongArith &change)&;
+	LongArithVect & operator+=(const LongArithVect &change)&;
 			    
-	LongArith & operator+=(LongArith &&change)&;
+	LongArithVect & operator+=(LongArithVect &&change)&;
 			    
-	LongArith & operator+=(long change)&;
+	LongArithVect & operator+=(long change)&;
 			    
 	// I created only prefix increment, because it faster and enough
-	LongArith & operator++()&;
+	LongArithVect & operator++()&;
 			    
-	LongArith & operator-=(const LongArith &change)&;
+	LongArithVect & operator-=(const LongArithVect &change)&;
 			    
-	LongArith & operator-=(LongArith &&change)&;
+	LongArithVect & operator-=(LongArithVect &&change)&;
 			    
 	// I created only prefix decrement, because it faster and enough
-	LongArith & operator--()&;
-	LongArith & operator-=(long change)&;
+	LongArithVect & operator--()&;
+	LongArithVect & operator-=(long change)&;
 	
-    LongArith & operator*=(const LongArith& multiplier)&;
-	LongArith & operator*=(long multiplier)&;
+    LongArithVect & operator*=(const LongArithVect& multiplier)&;
+	LongArithVect & operator*=(long multiplier)&;
 
-    LongArith & operator/=(const LongArith& divider)& {
-        return (*this = LongArith::FractionAndRemainder(*this, divider).first);
+    LongArithVect & operator/=(const LongArithVect& divider)& {
+        return (*this = LongArithVect::fraction_and_remainder(*this, divider).first);
     }
 
-    LongArith & operator%=(const LongArith& divider)& {
-        return (*this = LongArith::FractionAndRemainder(*this, divider).second);
+    LongArithVect & operator%=(const LongArithVect& divider)& {
+        return (*this = LongArithVect::fraction_and_remainder(*this, divider).second);
     }
 
 
 	//Logic
-	bool operator<(const LongArith &other) const;
+	bool operator<(const LongArithVect &other) const;
 
-	bool operator<=(const LongArith &other) const;
+	bool operator<=(const LongArithVect &other) const;
 
-	bool operator>(const LongArith &other) const;
+	bool operator>(const LongArithVect &other) const;
 
-	bool operator>=(const LongArith &other) const;
+	bool operator>=(const LongArithVect &other) const;
 
-	bool operator==(const LongArith &other) const;
+	bool operator==(const LongArithVect &other) const;
 
-	bool operator!=(const LongArith &other) const;
+	bool operator!=(const LongArithVect &other) const;
 
     // \brief true, if zero, false otherwise
-	bool equalsZero() const;
+	bool equals_zero() const;
 
 	// other
-	LongArith &operator=(const LongArith &other)&;
+	LongArithVect &operator=(const LongArithVect &other)&;
 
-	LongArith &operator=(LongArith &&temp)&;
+	LongArithVect &operator=(LongArithVect &&temp)&;
 
-	friend std::ostream &operator<<(std::ostream &os, const LongArith &obj);
+	friend std::ostream &operator<<(std::ostream &os, const LongArithVect &obj);
 
-	friend std::istream &operator >> (std::istream &is, LongArith& obj);
+	friend std::istream &operator >> (std::istream &is, LongArithVect& obj);
 };
 
 namespace std {
     template<>
-    inline void swap<LongArith>(LongArith& a, LongArith& b) {
+    inline void swap<LongArithVect>(LongArithVect& a, LongArithVect& b) {
         a.swap(b);
     }
 }

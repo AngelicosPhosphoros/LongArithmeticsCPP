@@ -1,17 +1,17 @@
-#include "LongArith.h"
+#include "LongArithVect.h"
 #include <cassert>
 #include <sstream>
 #include <stdexcept>
 #include <deque>
 #include <cstring>
 
-using compute_t = LongArith::compute_t;
-using digit_t = LongArith::digit_t;
-constexpr digit_t DIGIT_BASE = LongArith::DIGIT_BASE;
-constexpr size_t DIGIT_STRING_LENGTH = LongArith::DIGIT_STRING_LENGTH;
-constexpr digit_t MINUS_ONE = LongArith::MINUS_ONE;
+using compute_t = LongArithVect::compute_t;
+using digit_t = LongArithVect::digit_t;
+constexpr digit_t DIGIT_BASE = LongArithVect::DIGIT_BASE;
+constexpr size_t DIGIT_STRING_LENGTH = LongArithVect::DIGIT_STRING_LENGTH;
+constexpr digit_t MINUS_ONE = LongArithVect::MINUS_ONE;
 
-using container_type = LongArith::container_type;
+using container_type = LongArithVect::container_type;
 
 #pragma region Internal Static Code
 //****************** SIMPLE INTERNAL UTILS **********************
@@ -569,7 +569,7 @@ std::pair<container_type, container_type> divide_vectors(const container_type& d
 
 //***************** CLASS INTERFACE IMPLEMENTATIONS ****************************
 
-LongArith::LongArith(compute_t default_value, size_t default_capacity)
+LongArithVect::LongArithVect(compute_t default_value, size_t default_capacity)
 {
     storage.reserve(default_capacity);
     negative = default_value < 0;
@@ -587,18 +587,18 @@ LongArith::LongArith(compute_t default_value, size_t default_capacity)
     increment_array(storage, negative ? -rest : rest);
 }
 
-LongArith::LongArith(const LongArith& original) : storage(original.storage)
+LongArithVect::LongArithVect(const LongArithVect& original) : storage(original.storage)
 {
     negative = original.negative;
 }
 
-LongArith::LongArith(LongArith&& temporary) : storage(std::move(temporary.storage))
+LongArithVect::LongArithVect(LongArithVect&& temporary) : storage(std::move(temporary.storage))
 {
     negative = temporary.negative;
 }
 
 
-LongArith& LongArith::operator=(const LongArith& other)&
+LongArithVect& LongArithVect::operator=(const LongArithVect& other)&
 {
     if (this != &other)
     {
@@ -609,14 +609,14 @@ LongArith& LongArith::operator=(const LongArith& other)&
         }
         else
         {
-            LongArith tmp(other);
+            LongArithVect tmp(other);
             this->swap(tmp);
         }
     }
     return *this;
 }
 
-LongArith& LongArith::operator=(LongArith&& temp)&
+LongArithVect& LongArithVect::operator=(LongArithVect&& temp)&
 {
     std::swap(temp.storage, storage);
     negative = temp.negative;
@@ -625,7 +625,7 @@ LongArith& LongArith::operator=(LongArith&& temp)&
 
 
 // -1 if left>right, 1 if left<right, 0 otherwise
-signed short LongArith::compare_absolute_values(const LongArith& left, const LongArith& rigth)
+signed short LongArithVect::compare_absolute_values(const LongArithVect& left, const LongArithVect& rigth)
 {
     return compare_absolute_vectors(left.storage, rigth.storage);
 }
@@ -633,7 +633,7 @@ signed short LongArith::compare_absolute_values(const LongArith& left, const Lon
 
 // Plus
 
-LongArith& LongArith::operator+=(const LongArith& change)&
+LongArithVect& LongArithVect::operator+=(const LongArithVect& change)&
 {
     if (negative == change.negative)
     {
@@ -657,7 +657,7 @@ LongArith& LongArith::operator+=(const LongArith& change)&
     return *this;
 }
 
-LongArith& LongArith::operator+=(LongArith&& change)&
+LongArithVect& LongArithVect::operator+=(LongArithVect&& change)&
 {
     if (change.negative == negative)
     {
@@ -680,11 +680,11 @@ LongArith& LongArith::operator+=(LongArith&& change)&
     return *this;
 }
 
-LongArith& LongArith::operator+=(long change)&
+LongArithVect& LongArithVect::operator+=(long change)&
 {
     if (std::numeric_limits<compute_t>::max() < std::numeric_limits<long>::max())
     {
-        return *this += LongArith(change);
+        return *this += LongArithVect(change);
     }
     if (negative == change < 0)
     {
@@ -700,7 +700,7 @@ LongArith& LongArith::operator+=(long change)&
     {
         if (change>=DIGIT_BASE || change<=-static_cast<compute_t>(DIGIT_BASE))
         {
-            (*this) += LongArith(change);
+            (*this) += LongArithVect(change);
         }
         else
         {
@@ -714,7 +714,7 @@ LongArith& LongArith::operator+=(long change)&
 }
 
 
-LongArith& LongArith::operator++()&
+LongArithVect& LongArithVect::operator++()&
 {
     // this variant runs 1.4x faster than this+=1
     check_zero();
@@ -732,28 +732,28 @@ LongArith& LongArith::operator++()&
 
 // Minus
 
-LongArith& LongArith::operator-=(const LongArith& change)&
+LongArithVect& LongArithVect::operator-=(const LongArithVect& change)&
 {
     return *this += -change;
 }
 
-LongArith& LongArith::operator-=(LongArith&& change)&
+LongArithVect& LongArithVect::operator-=(LongArithVect&& change)&
 {
     return (*this) += -std::move(change);
 }
 
-LongArith operator-(LongArith left, const LongArith& rigth)
+LongArithVect operator-(LongArithVect left, const LongArithVect& rigth)
 {
     return std::move(left -= rigth);
 }
 
-LongArith operator-(LongArith left, LongArith&& rigth)
+LongArithVect operator-(LongArithVect left, LongArithVect&& rigth)
 {
     return std::move(left -= std::move(rigth));
 }
 
 
-LongArith& LongArith::operator-=(long change)&
+LongArithVect& LongArithVect::operator-=(long change)&
 {
     if (std::numeric_limits<long>::min() == change)
     {
@@ -765,10 +765,10 @@ LongArith& LongArith::operator-=(long change)&
 
 
 
-LongArith& LongArith::operator--()&
+LongArithVect& LongArithVect::operator--()&
 {
     // this variant runs 1.4x faster than this-=1
-    if (!negative && equalsZero())
+    if (!negative && equals_zero())
         negative = true;
     if (negative)
     {
@@ -783,10 +783,10 @@ LongArith& LongArith::operator--()&
 }
 
 // Multiplication
-LongArith operator*(const LongArith& a, const LongArith& b)
+LongArithVect operator*(const LongArithVect& a, const LongArithVect& b)
 {
-    LongArith res(0);
-    if (!(a.equalsZero() || b.equalsZero()))
+    LongArithVect res(0);
+    if (!(a.equals_zero() || b.equals_zero()))
     {
         res.negative = a.negative != b.negative;
         res.storage = mult_big(a.storage, b.storage);
@@ -794,18 +794,18 @@ LongArith operator*(const LongArith& a, const LongArith& b)
     return res;
 }
 
-LongArith & LongArith::operator*=(const LongArith & multiplier)&
+LongArithVect & LongArithVect::operator*=(const LongArithVect & multiplier)&
 {
     return (*this = (*this)*multiplier);
 }
 
-LongArith& LongArith::operator*=(long multiplier)&
+LongArithVect& LongArithVect::operator*=(long multiplier)&
 {
     if (multiplier < 0)
     {
         if (multiplier == std::numeric_limits<long>::min())
         {
-            *this *= LongArith(multiplier);
+            *this *= LongArithVect(multiplier);
         }
         this->negative = !this->negative;
         multiplier = -multiplier;
@@ -815,25 +815,25 @@ LongArith& LongArith::operator*=(long multiplier)&
 }
 
 
-std::pair<LongArith, LongArith> LongArith::FractionAndRemainder(const LongArith& dividable, const LongArith& divider)
+std::pair<LongArithVect, LongArithVect> LongArithVect::fraction_and_remainder(const LongArithVect& dividable, const LongArithVect& divider)
 {
-    typedef std::pair<LongArith, LongArith> t_result;
+    typedef std::pair<LongArithVect, LongArithVect> t_result;
     // Argument check
-    if (divider.equalsZero())
+    if (divider.equals_zero())
     {
         throw std::logic_error("Division by zero");
     }
 
     // Simple Cases
-    if (dividable.equalsZero())
+    if (dividable.equals_zero())
     {
         return t_result(0, 0);
     }
-    const int abs_compare = LongArith::compare_absolute_values(dividable, divider);
+    const int abs_compare = LongArithVect::compare_absolute_values(dividable, divider);
     if (abs_compare == 0)
     {
-        return t_result(LongArith((dividable.negative == divider.negative) ? 1 : -1),
-            LongArith(0));
+        return t_result(LongArithVect((dividable.negative == divider.negative) ? 1 : -1),
+            LongArithVect(0));
     }
     if (abs_compare > 0)
     {
@@ -842,7 +842,7 @@ std::pair<LongArith, LongArith> LongArith::FractionAndRemainder(const LongArith&
 
     // Here divider is always lower than dividable
 
-    LongArith fraction, remainder;
+    LongArithVect fraction, remainder;
     std::tie(fraction.storage, remainder.storage) = divide_vectors(dividable.storage, divider.storage);
     fraction.negative = dividable.negative != divider.negative;
     remainder.negative = dividable.negative;
@@ -850,7 +850,7 @@ std::pair<LongArith, LongArith> LongArith::FractionAndRemainder(const LongArith&
     return t_result(std::move(fraction), std::move(remainder));
 }
 
-std::pair<LongArith, long> LongArith::FractionAndRemainder(const LongArith & dividable, const long divider)
+std::pair<LongArithVect, long> LongArithVect::fraction_and_remainder(const LongArithVect & dividable, const long divider)
 {
     // Argument check
     if (!divider)
@@ -858,17 +858,17 @@ std::pair<LongArith, long> LongArith::FractionAndRemainder(const LongArith & div
         throw std::logic_error("Division by zero");
     }
 
-    typedef std::pair<LongArith, long> t_result;
+    typedef std::pair<LongArithVect, long> t_result;
     if (std::numeric_limits<long>::min() == divider)
     {
-        auto res = FractionAndRemainder(dividable, LongArith(divider));
+        auto res = fraction_and_remainder(dividable, LongArithVect(divider));
         return t_result(std::move(res.first), res.second.to_plain_int());
     }
     //static_assert(false, "Not finished");
-    return std::pair<LongArith, long>();
+    return std::pair<LongArithVect, long>();
 }
 
-compute_t LongArith::to_plain_int() const
+compute_t LongArithVect::to_plain_int() const
 {
     if (!plain_convertable())
         throw std::logic_error("Cannot convert to plain!");
@@ -881,7 +881,7 @@ compute_t LongArith::to_plain_int() const
 
 // Comparison
 
-bool LongArith::operator<(const LongArith& other) const
+bool LongArithVect::operator<(const LongArithVect& other) const
 {
     if (this == &other)
         return false;
@@ -896,7 +896,7 @@ bool LongArith::operator<(const LongArith& other) const
 }
 
 
-bool LongArith::operator>(const LongArith& other) const
+bool LongArithVect::operator>(const LongArithVect& other) const
 {
     if (this == &other)
         return false;
@@ -911,75 +911,79 @@ bool LongArith::operator>(const LongArith& other) const
 }
 
 
-bool LongArith::operator==(const LongArith& other) const
+bool LongArithVect::operator==(const LongArithVect& other) const
 {
     return (this == &other) || (negative == other.negative && compare_absolute_values(*this, other) == 0);
 }
 
-bool LongArith::operator<=(const LongArith& other) const
+bool LongArithVect::operator<=(const LongArithVect& other) const
 {
     return !this->operator>(other);
 }
 
 
-bool LongArith::operator>=(const LongArith& other) const
+bool LongArithVect::operator>=(const LongArithVect& other) const
 {
     return !this->operator<(other);
 }
 
-bool LongArith::operator!=(const LongArith& other) const
+bool LongArithVect::operator!=(const LongArithVect& other) const
 {
     return !this->operator==(other);
 }
 
-bool LongArith::equalsZero() const
+bool LongArithVect::equals_zero() const
 {
     return storage.size() == 1 && storage[0] == 0;
 }
 
-int LongArith::sign() const
+int LongArithVect::sign() const
 {
     if (negative)
         return -1;
-    if (equalsZero())
+    if (equals_zero())
         return 0;
     return 1;
 }
 
 
-std::ostream& operator<<(std::ostream& os, const LongArith& obj)
+std::ostream& operator<<(std::ostream& os, const LongArithVect& obj)
 {
-    return os << obj.toString();
+    return os << obj.to_string();
 }
 
-std::istream& operator >> (std::istream& is, LongArith& obj)
+std::istream& operator >> (std::istream& is, LongArithVect& obj)
 {
     std::string s;
     std::istream& r = is >> s;
-    obj = LongArith::fromString(s);
+    obj = LongArithVect::fromString(s);
     return r;
 }
 
-std::string LongArith::toString() const
+std::string LongArithVect::to_string() const
 {
-    std::stringstream res;
-    if (negative && !equalsZero())
-        res << "-";
-    res << storage.back();
-    for (ssize_t i = storage.size() - 2; i >= 0; --i)
+    std::string res;
+    res.reserve(storage.size()*LongArithVect::DIGIT_STRING_LENGTH + int(negative));
+
+    if (negative && !equals_zero())
+        res += '-';
+    res += std::to_string(storage.back());
+    for (size_t index = storage.size() - 1; index; --index)
     {
-        int digits = get_digit_count(storage[i]);
-        for (int j = 0; j < DIGIT_STRING_LENGTH - digits; ++j)
+        const size_t i = index - 1;
+        size_t digits = get_digit_count(storage[i]);
+        for (int j = 0; j < int(DIGIT_STRING_LENGTH) - digits; ++j)
         {
-            res << '0';
+            res += '0';
         }
-        res << storage[i];
+        res += std::to_string(storage[i]);
     }
-    return res.str();
+
+    return res;
 }
 
 
-LongArith LongArith::fromString(std::string s)
+LongArithVect LongArithVect::fromString(std::string s)
 {
     using namespace std;
     // Trim beginning
@@ -996,7 +1000,7 @@ LongArith LongArith::fromString(std::string s)
         s.erase(0, 1);;
     }
     // Working with digits
-    LongArith result;
+    LongArithVect result;
     result.negative = negative;
     container_type& digits = result.storage;
     digits.clear();
