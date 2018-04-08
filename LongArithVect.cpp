@@ -956,7 +956,7 @@ std::istream& operator >> (std::istream& is, LongArithVect& obj)
 {
     std::string s;
     std::istream& r = is >> s;
-    obj = LongArithVect::fromString(s);
+    obj = LongArithVect::from_string(s);
     return r;
 }
 
@@ -983,7 +983,7 @@ std::string LongArithVect::to_string() const
 }
 
 
-LongArithVect LongArithVect::fromString(std::string s)
+LongArithVect LongArithVect::from_string(std::string s)
 {
     using namespace std;
     // Trim beginning

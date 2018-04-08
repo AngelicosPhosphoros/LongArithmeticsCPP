@@ -1,6 +1,7 @@
 // LongArithmeticCPP.cpp : Defines the entry point for the console application.
 //
 #include "LongArithVect.h"
+#include "LongArithUnion.h"
 #include <iostream>
 #include <sstream>
 #include <list>
@@ -25,8 +26,8 @@ uint64_t rdtsc() {
 #endif
 
 #include <fstream>
-//std::ofstream out("out.txt");
-std::ostream& out = std::cout;
+std::ofstream out("out.txt");
+//std::ostream& out = std::cout;
 std::stringstream tout = std::stringstream();
 std::ostringstream garbage;
 
@@ -45,7 +46,7 @@ void simple_operation_benchmark()
     for (size_t i = 0; i < 1000000; ++i)
         ++a;
     garbage << a;
-    arith b = arith::fromString("1654984191651891");
+    arith b = arith::from_string("1654984191651891");
     for (size_t i = 0; i < 1000000; ++i)
         ++b;
     garbage << b;
@@ -100,23 +101,23 @@ int main()
 {
     using namespace  std;
 
-    const char old_label[] = "Old impl\n", new_label[] = "New impl\n";
-    // tout << old_label;
-    // simple_operation_benchmark<LA_Old>();
-    tout << new_label;
+    const char vect_label[] = "Vector impl\n", union_label[] = "Only Union impl\n";
+    tout << vect_label;
     simple_operation_benchmark<LongArithVect>();
+    tout << union_label;
+    simple_operation_benchmark<LongArithUnion>();
 
-    //tout << old_label;
-    //vector_op_benchmark<LA_Old>();
-    tout << new_label;
+    tout << vect_label;
     vector_op_benchmark<LongArithVect>();
+    tout << union_label;
+    vector_op_benchmark<LongArithUnion>();
 
 
     //fast_division_benchmark();
     out << tout.str();
     ofstream("tmp.txt") << garbage_marker << garbage.str();
 
-
+    
     return 0;
 }
 

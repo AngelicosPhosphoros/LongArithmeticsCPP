@@ -83,7 +83,7 @@ public:
     // \brief Builds long number from decimal string
     // \detailed Builds long number from string, which can begin from '-'
     //           or '+' and can contain only decimal symbols
-	static LongArithVect fromString(std::string s);
+	static LongArithVect from_string(std::string s);
 
     // \brief Returns sign of number
     // \return Returns -1, if negative; 0, if 0; 1 if positive
