@@ -90,10 +90,15 @@ public:
     int sign() const noexcept;
 
     // \brief Divide dividend by divider, returns fraction and remainder
+    // \detailed This function is provided to use in cases when user need both division and modulus results
+    //              it calculate it with complexity O(m*n*log(DIGIT_BASE)) in worst case
     // \return Pair of fraction (first) and remainder (second)
     static std::pair<LongArith, LongArith> fraction_and_remainder(const LongArith& dividable, const LongArith& divider);
 
     // \brief Divide dividend by divider, returns fraction and remainder
+    // \detailed This function is provided to use in cases when user need both division and modulus results when divider is plain number
+    //           It works significantly faster than version that get LongArith divider
+    //           Complexity of method is O(n)
     // \return Pair of fraction (first) and remainder (second)
     static std::pair<LongArith, long> fraction_and_remainder(const LongArith& dividable, const long divider);
 
