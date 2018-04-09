@@ -46,15 +46,15 @@ NOINLINE void simple_operation_benchmark()
     const size_t begin = rdtsc();
 
     arith a;
-    for (size_t i = 0; i < 1000000; ++i)
+    for (size_t i = 0; i < 10000000; ++i)
         ++a;
     garbage << a;
     arith b = arith::from_string("1654984191651891");
-    for (size_t i = 0; i < 1000000; ++i)
+    for (size_t i = 0; i < 10000000; ++i)
         ++b;
     garbage << b;
 
-    a = arith(100000);
+    a = arith(1000000);
     for (arith i = 0; i < a; ++i)
         b += arith(15057);
     garbage << b;
@@ -76,9 +76,10 @@ template<typename arith>
 NOINLINE void vector_op_benchmark()
 {
     tout << begin_marker << "VECT" << endl;
+    tout << "Mixed sized\n";
     const size_t begin = rdtsc();
     std::vector<arith> t;
-    arith M(1000000);
+    arith M(4000000);
     for (arith i = 0; i < M; ++i)
     {
         if (rand() % 100 > 95)
@@ -93,6 +94,27 @@ NOINLINE void vector_op_benchmark()
             t.push_back(tmp);
         }
     }
+    tout << rdtsc() - begin << endl;
+    for (auto& tmp : t)
+        garbage << tmp;
+    tout << "Dealloc\n";
+
+    size_t beg = rdtsc();
+    t.clear();
+    tout << rdtsc() - beg << endl;
+
+    tout << "Long\n";
+    beg = rdtsc();
+    for (arith i = 0; i < M; ++i)
+    {
+        arith tmp = rand() % 1000;
+        for (size_t i = 0; i < 40;++i)
+            tmp *= rand() % 1000;
+        t.push_back(tmp);
+
+    }
+    tout << rdtsc() - beg << endl;
+
     const size_t end = rdtsc();
     tout << end_marker << end - begin << endl;
     for (auto& tmp : t)
@@ -111,7 +133,7 @@ int main()
     simple_operation_benchmark<LongArithUnion>();
     tout << last_label;
     simple_operation_benchmark<LongArithLast>();
-    
+
     tout << endl;
 
     tout << vect_label;
@@ -125,8 +147,8 @@ int main()
     //fast_division_benchmark();
     out << tout.str();
     ofstream("tmp.txt") << garbage_marker << garbage.str();
+    ofstream("tmp.txt").clear();
 
-    
     return 0;
 }
 
