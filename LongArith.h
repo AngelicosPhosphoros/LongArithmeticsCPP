@@ -1,9 +1,7 @@
 #pragma once
 #include <ostream>
-#include <vector>
 #include <algorithm>
 #include <type_traits>
-#include <unordered_map>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>

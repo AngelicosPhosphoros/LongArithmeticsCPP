@@ -4,6 +4,8 @@
 #include <iostream>
 #include <sstream>
 #include <list>
+#include <vector>
+#include <tuple>
 
 #ifdef _WIN32
 #ifndef _MSC_VER

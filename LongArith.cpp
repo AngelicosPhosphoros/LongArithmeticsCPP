@@ -3,6 +3,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <deque>
+#include <tuple>
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -1241,6 +1242,7 @@ LongArith::container_union::container_union(const container_union & other)
         else // Copy from heap to local
         {
             is_local = true;
+            local_size = other.heap_data.size;
             data_pointer = local_data;
         }
         is_negative = other.is_negative;
@@ -1265,12 +1267,13 @@ LongArith::container_union::container_union(container_union && tmp) noexcept
     {
         is_local = true;
         data_pointer = local_data;
+        local_size = tmp.heap_data.size;
         memcpy(local_data, tmp.data_pointer, tmp.heap_data.size * sizeof(digit_t));
     }
 }
 
 template<>
-LongArith::container_union::container_union(const digit_t* beg, const digit_t* end) : is_negative(false)
+LongArith::container_union::container_union(const digit_t* beg, const digit_t* end)
 {
     const size_t requested_size = end - beg;
     if (!requested_size)
@@ -1286,7 +1289,9 @@ LongArith::container_union::container_union(const digit_t* beg, const digit_t* e
     else
     {
         is_local = false;
+        is_negative = false;
         data_pointer = new digit_t[requested_size];
+        heap_data.capacity = heap_data.size = requested_size;
         memcpy(data_pointer, beg, requested_size * sizeof(digit_t));
     }
 }
@@ -1305,7 +1310,8 @@ LongArith::container_union & LongArith::container_union::operator=(const contain
     {
         if (is_local) // We don't need to deallocate anything
         {
-            new(this)container_union(other); // noexcept actually so nothing wrong
+            container_union tmp(other);
+            new(this)container_union(std::move(tmp));
         }
         else // We are in heap
         {
@@ -1418,6 +1424,7 @@ void LongArith::container_union::switch_to_heap(const size_t reserve_amount)
 {
     assert(is_local && reserve_amount > local_capacity);
     data_pointer = new digit_t[reserve_amount];
+    is_local = false;
     memcpy(data_pointer, local_data, local_capacity * sizeof(digit_t));
     heap_data.size = local_size;
     heap_data.capacity = reserve_amount;
@@ -1438,7 +1445,7 @@ void LongArith::container_union::reallocate(const size_t new_capacity)
 void LongArith::container_union::clear()
 {
     local_size = 0;
-    heap_data.size = 0; // This change array values but as they not used we don't need them
+    heap_data.size = 0; // This change local array values but as they not used we don't need them
 }
 
 void LongArith::container_union::push_back(const digit_t val)
