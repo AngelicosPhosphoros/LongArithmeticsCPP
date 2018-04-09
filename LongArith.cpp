@@ -896,7 +896,7 @@ std::pair<LongArith, long> LongArith::fraction_and_remainder(const LongArith & d
 // Utility for constant calculation
 namespace hidden
 {
-    size_t len_10_in_DIGIT_BASE()
+    inline static size_t len_10_in_DIGIT_BASE()
     {
         size_t v = DIGIT_BASE;
         size_t r = 0;
