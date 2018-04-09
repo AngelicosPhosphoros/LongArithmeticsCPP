@@ -5,11 +5,6 @@
 #include <deque>
 #include <tuple>
 #include <cstring>
-#include <iostream>
-#include <fstream>
-std::ofstream LOGger("log.txt");
-#define LOG_PTR_G(ptr) LOGger<<"GOT: "<<ptr<<std::endl;
-#define LOG_PTR_D(ptr) LOGger<<"DEL: "<<ptr<<std::endl;
 
 
 struct internal_accessor :public LongArith {
