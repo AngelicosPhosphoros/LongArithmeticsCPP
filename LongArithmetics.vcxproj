@@ -110,11 +110,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="LongArithLast.cpp" />
     <ClCompile Include="LongArithUnion.cpp" />
     <ClCompile Include="LongArithVect.cpp" />
     <ClCompile Include="LongArithmeticCPP.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="LongArithLast.h" />
     <ClInclude Include="LongArithUnion.h" />
     <ClInclude Include="LongArithVect.h" />
   </ItemGroup>

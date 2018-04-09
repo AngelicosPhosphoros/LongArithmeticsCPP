@@ -24,12 +24,18 @@
     <ClCompile Include="LongArithUnion.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LongArithLast.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LongArithVect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LongArithUnion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LongArithLast.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

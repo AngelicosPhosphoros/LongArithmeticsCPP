@@ -2,6 +2,7 @@
 //
 #include "LongArithVect.h"
 #include "LongArithUnion.h"
+#include "LongArithLast.h"
 #include <iostream>
 #include <sstream>
 #include <list>
@@ -103,11 +104,13 @@ int main()
 {
     using namespace  std;
 
-    const char vect_label[] = "Vector impl\n", union_label[] = "Only Union impl\n";
+    const char vect_label[] = "Vector impl\n", union_label[] = "Only Union impl\n", last_label[] = "Last impl\n";
     tout << vect_label;
     simple_operation_benchmark<LongArithVect>();
     tout << union_label;
     simple_operation_benchmark<LongArithUnion>();
+    tout << last_label;
+    simple_operation_benchmark<LongArithLast>();
     
     tout << endl;
 
@@ -115,6 +118,8 @@ int main()
     vector_op_benchmark<LongArithVect>();
     tout << union_label;
     vector_op_benchmark<LongArithUnion>();
+    tout << last_label;
+    vector_op_benchmark<LongArithLast>();
 
 
     //fast_division_benchmark();
