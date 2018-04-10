@@ -145,7 +145,7 @@ static inline signed short compare_absolute_vectors(const container_type& left, 
 
 // Implementation of add_array
 // Assume original and addition is different
-inline void unchecked_internal_add_array(container_type& original, const container_type& addition, const size_t shift)
+static void unchecked_internal_add_array(container_type& original, const container_type& addition, const size_t shift)
 {
     assert(&original != &addition);
     // when we work with addition, we keep in mind "virtual" digits
@@ -192,7 +192,7 @@ inline void unchecked_internal_add_array(container_type& original, const contain
 // \param original is changing vector
 // \param addition is change
 // \param shift is first index of original to change
-static void add_array(container_type &original, const container_type &addition, const size_t shift)
+inline static void add_array(container_type &original, const container_type &addition, const size_t shift)
 {
     // to prevent errors
     if (&original == &addition)
@@ -1237,7 +1237,7 @@ LongArith::container_union::container_union(const container_union & other)
         else // Copy from heap to local
         {
             is_local = true;
-            local_size = other.heap_data.size;
+            local_size = static_cast<uint8_t>(other.heap_data.size);
             data_pointer = local_data;
         }
         is_negative = other.is_negative;
@@ -1262,7 +1262,7 @@ LongArith::container_union::container_union(container_union && tmp) noexcept
     {
         is_local = true;
         data_pointer = local_data;
-        local_size = tmp.heap_data.size;
+        local_size = static_cast<uint8_t>(tmp.heap_data.size);
         memcpy(local_data, tmp.data_pointer, tmp.heap_data.size * sizeof(digit_t));
     }
 }
@@ -1279,7 +1279,7 @@ LongArith::container_union::container_union(const digit_t* beg, const digit_t* e
     {
         new(this)container_union();
         memcpy(data_pointer, beg, requested_size * sizeof(digit_t));
-        local_size = requested_size;
+        local_size = static_cast<uint8_t>(requested_size);
     }
     else
     {
@@ -1392,7 +1392,7 @@ void LongArith::container_union::resize(const size_t new_size)
     reserve(new_size);
     if (is_local)
     {
-        local_size = new_size;
+        local_size = static_cast<uint8_t>(new_size);
     }
     else
     {
