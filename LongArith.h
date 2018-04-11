@@ -8,6 +8,7 @@
 typedef SSIZE_T ssize_t;
 #endif
 
+
 class LongArith
 {
 public:
@@ -17,12 +18,12 @@ public:
     // Digits of our big number
     typedef unsigned long digit_t;
     // this is for intermediate computation
-    // must be able to store DIGIT_BASE**2
+    // must be able to store DigitBase**2
     typedef signed long long compute_t;
 
     // base of our numeral system
-    static constexpr compute_t DIGIT_BASE = 1000ULL * 1000 * 1000;
-    static constexpr size_t DIGIT_STRING_LENGTH = 9; // how long string of one digit
+    static constexpr compute_t DigitBase = 1000ULL * 1000 * 1000;
+    static constexpr size_t DigitStringLength = 9; // how long string of one digit
 
     // assertions
     static_assert(sizeof(digit_t) <= sizeof(compute_t), "compute_t must be bigger than digit_t");
@@ -89,7 +90,7 @@ public:
 
     // \brief Divide dividend by divider, returns fraction and remainder
     // \detailed This function is provided to use in cases when user need both division and modulus results
-    //              it calculate it with complexity O(m*n*log(DIGIT_BASE)) in worst case
+    //              it calculate it with complexity O(m*n*log(DigitBase)) in worst case
     // \return Pair of fraction (first) and remainder (second)
     static std::pair<LongArith, LongArith> fraction_and_remainder(const LongArith& dividable, const LongArith& divider);
 
@@ -242,6 +243,7 @@ protected:
         container_union(Iter1 beg, Iter2 end);
         template<>
         container_union(const digit_t * beg, const digit_t * end);
+        container_union(const size_t initial_capacity);
         ~container_union();
         container_union& operator= (const container_union& other);
         container_union& operator= (container_union&& tmp) noexcept;

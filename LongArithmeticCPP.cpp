@@ -97,6 +97,38 @@ void vector_op_benchmark()
         garbage << tmp;
 }
 
+template<typename arith>
+void factorial_op_benchmark_long()
+{
+    tout << begin_marker << "Factorial Long" << endl;
+    const size_t begin = rdtsc();
+    arith M(200 * 1000);
+    arith fact = 1;
+    for (arith i = 1; i <= M; ++i)
+    {
+        fact *= i;
+    }
+    const size_t end = rdtsc();
+    tout << end_marker << end - begin << endl;
+    garbage << endl << fact << endl;
+}
+
+template<typename arith>
+void factorial_op_benchmark_plain()
+{
+    tout << begin_marker << "Factorial" << endl;
+    const size_t begin = rdtsc();
+    long M(200 * 1000);
+    arith fact = 1;
+    for (long i = 1; i <= M; ++i)
+    {
+        fact *= i;
+    }
+    const size_t end = rdtsc();
+    tout << end_marker << end - begin << endl;
+    garbage << endl << fact << endl;
+}
+
 void fast_division_benchmark()
 {
     tout << begin_marker << "FAST DIV" << endl;
@@ -196,7 +228,7 @@ void compare_long_and_simple_div()
         int v;
         do {
             v = rand();
-        } while (v==0);
+        } while (v == 0);
         dividers.emplace_back(v);
     }
 
@@ -235,7 +267,7 @@ void compare_long_and_simple_div()
     bool correct = true;
     for (size_t i = 0; i < result1.size(); ++i)
     {
-        if (result1[i].first != result2[i].first || result1[i].second.to_plain_int()!=result2[i].second)
+        if (result1[i].first != result2[i].first || result1[i].second.to_plain_int() != result2[i].second)
         {
             correct = false;
 
@@ -264,6 +296,12 @@ int main()
     using namespace  std;
 
     const char old_label[] = "Old impl\n", new_label[] = "New impl\n";
+
+
+    factorial_op_benchmark_plain<LongArith>();
+
+    factorial_op_benchmark_long<LongArith>();
+
     // tout << old_label;
     // simple_operation_benchmark<LA_Old>();
     tout << new_label;
@@ -287,8 +325,8 @@ int main()
     size_t very_begin = rdtsc();
 
     LongArith tt = 11;
-    tt *= LongArith::DIGIT_BASE;
-    tt *= LongArith::DIGIT_BASE;
+    tt *= LongArith::DigitBase;
+    tt *= LongArith::DigitBase;
     tt += 11;
     out << tt / 11 << endl;
     out << (tt - 11) / 11 << endl;
