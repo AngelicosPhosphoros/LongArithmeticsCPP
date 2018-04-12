@@ -1,4 +1,5 @@
 #define NOMINMAX
+#define _CRT_SECURE_NO_WARNINGS 
 
 #include "LongArith.h"
 #include <cassert>
@@ -151,9 +152,21 @@ static void unchecked_internal_add_array(container_type& original, const contain
 {
     assert(&original != &addition);
     // when we work with addition, we keep in mind "virtual" digits
-    const size_t addition_size = addition.size(), original_size = original.size();
+    const size_t addition_size = addition.size();
     if (addition_size + shift > (original.capacity() << 1))
+    {
         original.reserve(addition_size + shift + 1);
+    }
+        
+    if (shift >= original.size())
+    {
+        const size_t old_size = original.size();
+        original.resize(shift + 1);
+        std::fill(original.begin() + old_size, original.end(), 0);
+    }
+
+    const size_t original_size = original.size();
+    
     compute_t sum = 0;
     const size_t less = std::min(addition_size + shift, original_size);
     size_t index = shift;
