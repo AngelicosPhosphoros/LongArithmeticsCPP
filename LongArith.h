@@ -3,11 +3,6 @@
 #include <algorithm>
 #include <type_traits>
 
-#if defined(_MSC_VER)
-#include <BaseTsd.h>
-typedef SSIZE_T ssize_t;
-#endif
-
 
 class LongArith
 {
