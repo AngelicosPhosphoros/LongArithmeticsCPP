@@ -29,7 +29,12 @@ using container_type = internal_accessor::container_type;
 
 // Type asserts
 static_assert(std::is_nothrow_move_assignable<LongArith>::value && std::is_nothrow_move_constructible<LongArith>::value, "Nothrow guarantee check for LongArith failed");
-static_assert(std::numeric_limits<compute_t>::max() >= DigitBase*DigitBase && std::numeric_limits<compute_t>::min() <= -DigitBase*DigitBase, "Checks for sizes of compute_t failed");
+static_assert(std::numeric_limits<compute_t>::max() >= DigitBase*DigitBase 
+    && std::numeric_limits<compute_t>::min() <= -DigitBase*DigitBase
+    && std::numeric_limits<compute_t>::max() / DigitBase >= DigitBase
+    && std::numeric_limits<compute_t>::min() / DigitBase <= -DigitBase
+    ,
+    "Checks for sizes of compute_t failed");
 static_assert(std::numeric_limits<digit_t>::max() >= DigitBase, "digit_t have not enough range");
 
 // Casts 
