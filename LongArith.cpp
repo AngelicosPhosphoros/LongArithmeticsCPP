@@ -748,29 +748,6 @@ LongArith& LongArith::operator++()&
     return *this;
 }
 
-// Minus
-
-LongArith& LongArith::operator-=(const LongArith& change)&
-{
-    return *this += -change;
-}
-
-LongArith& LongArith::operator-=(LongArith&& change)&
-{
-    return (*this) += -std::move(change);
-}
-
-LongArith operator-(LongArith left, const LongArith& rigth)
-{
-    return std::move(left -= rigth);
-}
-
-LongArith operator-(LongArith left, LongArith&& rigth)
-{
-    return std::move(left -= std::move(rigth));
-}
-
-
 LongArith& LongArith::operator-=(long change)&
 {
     if (std::numeric_limits<long>::min() == change)
@@ -812,10 +789,6 @@ LongArith operator*(const LongArith& a, const LongArith& b)
     return res;
 }
 
-LongArith & LongArith::operator*=(const LongArith & multiplier)&
-{
-    return (*this = (*this)*multiplier);
-}
 
 LongArith& LongArith::operator*=(long multiplier)&
 {

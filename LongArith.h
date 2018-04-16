@@ -118,7 +118,6 @@ public:
 
 
     // \brief Arithmetic plus. Make copy of first argument. Complexity is O(n)
-    // \detailed Plus. If 
     friend LongArith operator+(LongArith a, const LongArith &b) {
         return std::move(a += b);
     };
@@ -127,11 +126,51 @@ public:
         return std::move(b += std::move(a));
     }
 
-    friend LongArith operator-(LongArith left, const LongArith &rigth);
+    friend LongArith operator+(LongArith a, const long b) {
+        return a += b;
+    }
+
+    friend LongArith operator+(const long a, LongArith b) {
+        return b += a;
+    }
+
+    // \brief Arithmetic substraction. Make copy of both arguments. Complexity is O(n)
+    friend LongArith operator-(LongArith left, const LongArith &rigth){
+        return std::move(left -= rigth);
+    }
+
+    // \brief Arithmetic substraction. Make copy of first argument and change other. Complexity is O(n)
+    friend LongArith operator-(LongArith left, LongArith&& rigth)
+    {
+        return std::move(left -= std::move(rigth));
+    }
+
+    friend LongArith operator-(LongArith left, const long rigth) {
+        return std::move(left -= rigth);
+    }
+
+    friend LongArith operator-(const long left, LongArith rigth) {
+        return -std::move(rigth -= left);
+    }
 
     friend LongArith operator *(const LongArith& a, const LongArith& b);
+    friend LongArith operator *(LongArith a, const long b) {
+        return std::move(a *= b);
+    }
+    friend LongArith operator *(const long a, LongArith b) {
+        return std::move(b *= a);
+    }
+
     friend LongArith operator /(const LongArith& a, const LongArith& b) {
         return LongArith::fraction_and_remainder(a, b).first;
+    }
+
+    friend LongArith operator /(const LongArith& a, const long b) {
+        return LongArith::fraction_and_remainder(a, b).first;
+    }
+
+    friend long operator%(const LongArith& a, const long b) {
+        return LongArith::fraction_and_remainder(a, b).second;
     }
 
     friend LongArith operator %(const LongArith& a, const LongArith& b) {
@@ -159,15 +198,22 @@ public:
     // I created only prefix increment, because it faster and enough
     LongArith & operator++()&;
 
-    LongArith & operator-=(const LongArith &change)&;
+    LongArith & operator-=(const LongArith &change)& {
+        return *this += -change;
+    }
 
-    LongArith & operator-=(LongArith &&change)&;
+    LongArith & operator-=(LongArith &&change)&{
+        return (*this) += -std::move(change);
+    }
 
     // I created only prefix decrement, because it faster and enough
     LongArith & operator--()&;
     LongArith & operator-=(long change)&;
 
-    LongArith & operator*=(const LongArith& multiplier)&;
+    LongArith & operator*=(const LongArith& multiplier)&{
+        return (*this = (*this)*multiplier);
+    }
+
     LongArith & operator*=(long multiplier)&;
 
     LongArith & operator/=(const LongArith& divider)& {
