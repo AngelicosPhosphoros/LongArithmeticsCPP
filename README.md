@@ -1,7 +1,7 @@
 Long Arithmetics C++
 ======================
 
-This is a optimized realization of integer long arithmetics on C++
+This is a optimized realization of signed integer long arithmetics on C++
 
 # How to use
 
