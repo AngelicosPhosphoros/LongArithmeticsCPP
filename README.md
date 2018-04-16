@@ -39,6 +39,9 @@ Static method `fraction_and_remainder(a,b)`: `a` must be LongArith, `b` can be `
 
 # Internal representation and optimizations
 Digits of long number is encoded with notation of 1000 000 000 (`DigitBase` constant) to decrease number of operations. It uses 10-power base to enhance perfomance of string conversion.
+
 Move semantics used everywhere where it can be used.
+
 Internal representation is special struct that keep small numbers direcly in local space without allocation of memory on heap (likely to *Small string optimization*). This improve speed of working with a lot of LongArith in vectors, etc. by eliminating of cache errors. On MS VS x64 numbers lower than 10^36 can be stored locally.
+
 If capacity of local storage is exceeded, it allocate memory in heap and use local space to keep capacity and size of heap data.
