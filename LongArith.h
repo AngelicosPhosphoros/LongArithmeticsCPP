@@ -1,3 +1,7 @@
+/**
+Copyright (c) 2018 AngelicosPhosphoros
+https://github.com/AngelicosPhosphoros/LongArithmeticsCPP/
+*/
 #pragma once
 #include <ostream>
 #include <algorithm>
