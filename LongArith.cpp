@@ -1,3 +1,7 @@
+/**
+Copyright (c) 2018 AngelicosPhosphoros
+https://github.com/AngelicosPhosphoros/LongArithmeticsCPP/
+*/
 #define NOMINMAX
 #define _CRT_SECURE_NO_WARNINGS 
 
