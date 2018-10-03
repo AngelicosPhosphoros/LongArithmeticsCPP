@@ -208,6 +208,7 @@ void fast_division_benchmark()
 
 void compare_long_and_simple_div()
 {
+	(1 != LongArith(1));
     tout << begin_marker << "PLAIN DIV" << endl;
     const size_t begin = rdtsc();
 

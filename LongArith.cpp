@@ -996,55 +996,55 @@ compute_t LongArith::to_plain_int() const
 
 // Comparison
 
-bool LongArith::operator<(const LongArith& other) const
+bool operator<(const LongArith& left, const LongArith &right)
 {
-    if (this == &other)
+    if (&left == &right)
         return false;
-    if (get_negative() && !other.get_negative())
+    if (left.get_negative() && !right.get_negative())
         return true;
-    if (other.get_negative() && !get_negative())
+    if (right.get_negative() && !left.get_negative())
         return false;
-    if (get_negative())
-        return compare_absolute_values(*this, other) < 0;
+    if (left.get_negative())
+        return LongArith::compare_absolute_values(left, right) < 0;
     else
-        return compare_absolute_values(*this, other) > 0;
+        return LongArith::compare_absolute_values(left, right) > 0;
 }
 
 
-bool LongArith::operator>(const LongArith& other) const
+bool operator>(const LongArith& left, const LongArith &right)
 {
-    if (this == &other)
+    if (&left == &right)
         return false;
-    if (get_negative() && !other.get_negative())
+    if (left.get_negative() && !right.get_negative())
         return false;
-    if (other.get_negative() && !get_negative())
+    if (right.get_negative() && !left.get_negative())
         return true;
-    if (get_negative())
-        return compare_absolute_values(*this, other) > 0;
+    if (left.get_negative())
+        return LongArith::compare_absolute_values(left, right) > 0;
     else
-        return compare_absolute_values(*this, other) < 0;
+        return LongArith::compare_absolute_values(left, right) < 0;
 }
 
 
-bool LongArith::operator==(const LongArith& other) const
+bool operator==(const LongArith& left, const LongArith &right)
 {
-    return (this == &other) || (get_negative() == other.get_negative() && compare_absolute_values(*this, other) == 0);
+    return (&left == &right) || (left.get_negative() == right.get_negative() && LongArith::compare_absolute_values(left, right) == 0);
 }
 
-bool LongArith::operator<=(const LongArith& other) const
+bool operator<=(const LongArith& left, const LongArith &right)
 {
-    return !this->operator>(other);
+    return !(left>right);
 }
 
 
-bool LongArith::operator>=(const LongArith& other) const
+bool operator>=(const LongArith& left, const LongArith &right)
 {
-    return !this->operator<(other);
+    return !(left<right);
 }
 
-bool LongArith::operator!=(const LongArith& other) const
+bool operator!=(const LongArith& left, const LongArith &right)
 {
-    return !this->operator==(other);
+    return !(left == right);
 }
 
 bool LongArith::equals_zero() const noexcept
