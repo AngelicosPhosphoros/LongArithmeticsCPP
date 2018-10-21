@@ -41,7 +41,7 @@ static_assert(std::numeric_limits<compute_t>::max() >= DigitBase*DigitBase
     "Checks for sizes of compute_t failed");
 static_assert(std::numeric_limits<digit_t>::max() >= DigitBase, "digit_t have not enough range");
 
-// Casts 
+// Runtime checks
 #if 0
 
 compute_t cast_digit_to_compute(const digit_t val)
@@ -60,9 +60,13 @@ digit_t cast_compute_to_digit(const compute_t val)
 #define TO_COMPUTE_T(val) cast_digit_to_compute(val)
 #define TO_DIGIT_T(val) cast_compute_to_digit(val)
 
+#define LA_ASSERT(x) assert(x)
+
 #else
 #define TO_COMPUTE_T(val) static_cast<compute_t>(val)
 #define TO_DIGIT_T(val) static_cast<digit_t>(val)
+
+#define LA_ASSERT(x) 
 #endif
 
 
@@ -72,7 +76,7 @@ digit_t cast_compute_to_digit(const compute_t val)
 // how many digits we need to storage it
 static size_t get_digit_count(digit_t val)
 {
-    assert(val < DigitBase);
+    LA_ASSERT(val < DigitBase);
     if (val < 10)
         return 1;
     if (val < 100)
@@ -164,7 +168,7 @@ static inline signed short compare_absolute_vectors(const container_type& left, 
 // Assume original and addition is different
 static void unchecked_internal_add_array(container_type& original, const container_type& addition, const size_t shift)
 {
-    assert(&original != &addition);
+    LA_ASSERT(&original != &addition);
     // when we work with addition, we keep in mind "virtual" digits
     const size_t addition_size = addition.size();
     if (addition_size + shift > (original.capacity() << 1))
@@ -242,7 +246,7 @@ inline static void add_array(container_type &original, const container_type &add
 // \param less is value which decreased left
 static void substract_array(container_type &bigger, const container_type &less)
 {
-    assert(bigger.size() >= less.size());
+    LA_ASSERT(bigger.size() >= less.size());
     const size_t bigger_size = bigger.size(), less_size = less.size();
     compute_t to_del = 0;
     for (size_t i = 0; i < less_size; i++)
@@ -300,7 +304,7 @@ static void inline inc1_array(container_type &num)
 static void inline dec1_array(container_type &num)
 {
     // We cannot decrement zero
-    assert(!(num.size() == 1 && num.back() == 0));
+    LA_ASSERT(!(num.size() == 1 && num.back() == 0));
     bool cont = true;
     size_t index = 0;
     for (size_t index = 0, num_size = num.size(); cont && index<num_size; ++index)
@@ -316,7 +320,7 @@ static void inline dec1_array(container_type &num)
         }
     }
     clean_leading_zeros(num);
-    assert(!cont);
+    LA_ASSERT(!cont);
 }
 
 
@@ -324,7 +328,7 @@ static void inline dec1_array(container_type &num)
 // \param change must be positive
 static void increment_array(container_type &arr, compute_t change)
 {
-    assert(change >= 0);
+    LA_ASSERT(change >= 0);
     switch (change)
     {
     case 0: return;
@@ -351,8 +355,8 @@ static void increment_array(container_type &arr, compute_t change)
 // \return if arr>change return true else false (means change digit)
 static bool decrement_array(container_type &arr, digit_t change)
 {
-    assert(change >= 0);
-    assert(change < DigitBase*DigitBase);
+    LA_ASSERT(change >= 0);
+    LA_ASSERT(change < DigitBase*DigitBase);
 
     compute_t current_val = (arr.size() > 1) ?
         (arr[0] + arr[1] * DigitBase) : arr[0];
@@ -405,7 +409,7 @@ static void mult_small(container_type& big_number, const compute_t multiplicator
     case 1:
         return;
     default:
-        assert(multiplicator < TO_COMPUTE_T(DigitBase)*DigitBase);
+        LA_ASSERT(multiplicator < TO_COMPUTE_T(DigitBase)*DigitBase);
         compute_t trans_product = 0, mult = multiplicator;
         for (size_t i = 0, big_number_size = big_number.size(); i < big_number_size; i++)
         {
@@ -448,10 +452,10 @@ static container_type mult_big(const container_type& m1, const container_type& m
 // \param divider is simple divider, must begin from nonzero character
 digit_t divide_almost_same_len_vectors(container_type& dividend_and_remainder, const container_type& divider)
 {
-    assert(dividend_and_remainder.size() && divider.size());
-    assert(dividend_and_remainder.size() >= divider.size() && dividend_and_remainder.size() <= divider.size() + 1);
-    assert(divider.back());
-    assert(dividend_and_remainder.size() == divider.size() || (dividend_and_remainder.back() && dividend_and_remainder.size() == divider.size() + 1));
+    LA_ASSERT(dividend_and_remainder.size() && divider.size());
+    LA_ASSERT(dividend_and_remainder.size() >= divider.size() && dividend_and_remainder.size() <= divider.size() + 1);
+    LA_ASSERT(divider.back());
+    LA_ASSERT(dividend_and_remainder.size() == divider.size() || (dividend_and_remainder.back() && dividend_and_remainder.size() == divider.size() + 1));
     // Check simple cases
     // They have complexity of O(n)
     const auto abs_cmp = compare_absolute_vectors(dividend_and_remainder, divider);
@@ -493,7 +497,7 @@ digit_t divide_almost_same_len_vectors(container_type& dividend_and_remainder, c
     // check lower_div
     multiplicated = divider;
     mult_small(multiplicated, lower_div);
-    assert(compare_absolute_vectors(multiplicated, dividend_and_remainder) > 0);
+    LA_ASSERT(compare_absolute_vectors(multiplicated, dividend_and_remainder) > 0);
     substract_array(dividend_and_remainder, multiplicated);
     if (compare_absolute_vectors(dividend_and_remainder, divider) > 0)
     {
@@ -565,7 +569,7 @@ digit_t divide_almost_same_len_vectors(container_type& dividend_and_remainder, c
 // \return pair of fraction and remainder
 std::pair<container_type, container_type> divide_vectors(const container_type& dividable, const container_type& divider)
 {
-    assert(dividable.size() >= divider.size());
+    LA_ASSERT(dividable.size() >= divider.size());
     std::deque<digit_t> fraction; // because we insert from begin, use deque
 
     container_type current_part(dividable.end() - divider.size(), dividable.end());
@@ -626,7 +630,7 @@ std::pair<container_type, container_type> divide_vectors(const container_type& d
             }
             else
             {
-                assert(last); // This can happen only if last
+                LA_ASSERT(last); // This can happen only if last
             }
         }
 
@@ -1348,7 +1352,7 @@ void LongArith::container_union::swap(container_union & other)& noexcept
     }
     else if (!l_stack && !r_stack)
     {
-        // Simple swap local bytes
+        // Simple swap local bytes and switch pointers to dynamic memory
         constexpr size_t sz = sizeof(*this);
         char tmp[sz];
         memcpy(tmp, this, sz);
@@ -1422,7 +1426,7 @@ void LongArith::container_union::reserve(const size_t new_capacity)
 
 void LongArith::container_union::switch_to_heap(const size_t reserve_amount)
 {
-    assert(is_local && reserve_amount > local_capacity);
+    LA_ASSERT(is_local && reserve_amount > local_capacity);
     data_pointer = new digit_t[reserve_amount];
     is_local = false;
     memcpy(data_pointer, local_data, local_capacity * sizeof(digit_t));
@@ -1432,7 +1436,7 @@ void LongArith::container_union::switch_to_heap(const size_t reserve_amount)
 
 void LongArith::container_union::reallocate(const size_t new_capacity)
 {
-    assert(!is_local && new_capacity > heap_data.capacity);
+    LA_ASSERT(!is_local && new_capacity > heap_data.capacity);
     digit_t* allocated = new digit_t[new_capacity];
     memcpy(allocated, data_pointer, heap_data.size * sizeof(digit_t));
     digit_t* old = data_pointer;
@@ -1469,14 +1473,14 @@ void LongArith::container_union::push_back(const digit_t val)
 // UB if size()==0. Return last value
 digit_t LongArith::container_union::back() const
 {
-    assert(size() > 0);
+    LA_ASSERT(size() > 0);
     return data_pointer[size() - 1];
 }
 
 // UB if size()==0. Remove last value
 void LongArith::container_union::pop_back()
 {
-    assert(size() > 0);
+    LA_ASSERT(size() > 0);
     if (is_local)
     {
         --local_size;
