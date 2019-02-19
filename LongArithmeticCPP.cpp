@@ -6,11 +6,10 @@
 #include <list>
 #include <vector>
 #include <tuple>
+#include <chrono>
 
 #ifdef _WIN32
-#ifndef _MSC_VER
-#include <x86intrin.h>
-#endif
+#include <intrin.h>
 
 uint64_t rdtsc() {
     return __rdtsc();
@@ -118,6 +117,7 @@ void factorial_op_benchmark_plain()
 {
     tout << begin_marker << "Factorial" << endl;
     const size_t begin = rdtsc();
+	const auto t_begin = std::chrono::high_resolution_clock::now();
     long M(200 * 1000);
     arith fact = 1;
     for (long i = 1; i <= M; ++i)
@@ -125,6 +125,8 @@ void factorial_op_benchmark_plain()
         fact *= i;
     }
     const size_t end = rdtsc();
+	const auto end_t = std::chrono::high_resolution_clock::now();
+	tout << "Duration " << std::chrono::duration_cast<std::chrono::milliseconds>(end_t - t_begin).count() << endl;
     tout << end_marker << end - begin << endl;
     garbage << endl << fact << endl;
 }
